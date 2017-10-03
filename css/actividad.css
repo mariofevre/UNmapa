@@ -1,0 +1,352 @@
+/*
+* treccppu.css
+*
+* estilos generales dise�ads para TReCC Procesos Participativos Urbanos 
+* 
+* @package    	TReCC(tm) Procesos Participativos Urbanos.
+* @subpackage 	estilos
+* @author     	TReCC SA
+* @author     	<mario@trecc.com.ar> <trecc@trecc.com.ar>
+* @author    	www.trecc.com.ar  
+* @copyright	2013 2014 TReCC SA
+* @license    	http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 (GPL-3.0)
+* Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
+* Este archivo es software libre: tu puedes redistriburlo 
+* y/o modificarlo bajo los t�rminos de la "GNU General Public License" 
+* publicada por la Free Software Foundation, version 3
+* 
+* Este archivo es distribuido por si mismo y dentro de sus proyectos 
+* con el objetivo de ser �til, eficiente, predecible y transparente
+* pero SIN NIGUNA GARANT�A; sin siquiera la garant�a impl�cita de
+* CAPACIDAD DE MERCANTILIZACI�N o utilidad para un prop�sito particular.
+* Consulte la "GNU General Public License" para m�s detalles.
+* 
+* Si usted no cuenta con una copia de dicha licencia puede encontrarla aqu�: <http://www.gnu.org/licenses/>.
+*/
+.ui-slider .ui-slider-handle {
+    width: 0.9em;
+}
+
+span.ui-slider-handle:hover {
+    background-color:#007fff;
+    border-color:#003eff;
+}
+
+
+.ui-slider-vertical .ui-slider-handle {
+    left: -0.4em;
+}
+.ui-slider-vertical {
+    width: 0.4em;
+}
+.ui-widget {
+    font-size: 0.6em;
+}
+a{
+		cursor:pointer;
+	}
+.dato.fecha{
+    width: 60px;
+}
+.dato.autor{
+    width: 90px;
+}		
+.dato.descripcion{
+    width: 180px;
+}		
+
+.dato.localizaciones, .dato.imagenes{
+	font-size: 11px;
+}
+
+.elemento {
+    background-color: #ADD8E6;
+    border: 2px solid #08AFD9;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 10px;
+    height: 14px;
+    overflow: hidden;
+    padding: 2px 1px;
+    position: relative;
+    width: 16px;
+ }
+ 
+
+li{
+	border:2px solid transparent;
+}
+
+li:hover div.punto{
+	border-color:blue;
+}
+
+label, .aclaracion{			
+    display: inline-block;
+    font-weight: normal;
+    margin-right: 2px;
+    text-align: right;
+    vertical-align: middle;
+    width: 200px;
+    
+}
+
+label.lon{
+	width:55px;
+}
+
+label{
+	min-height: 16px;
+}
+form > div {
+    vertical-align: middle;
+    border:none;
+}
+.aclaracion{	
+ 	text-align: left;
+ 	margin:2px;
+ 	border:none;		
+}
+
+.formulario{
+	border:2px solid #f55;
+	background-color:#ffb;
+	margin: 10px;
+	display:inline-block;
+	position:relative;
+	width:750px;
+}
+.formulario form{
+	margin: 0px;
+}
+		
+.formulario input,.formulario select{
+	color: #f55;
+	background-color:#ffb;
+	vertical-align: middle;
+	margin-top:2px;
+	margin-bottom:2px;
+}	
+.formulario label,.formulario .aclaracion{
+	color: #f55;
+}	
+
+.formulario.vista{
+	border-color:#55f;
+}
+.formulario.vista, .formulario.vista input,.formulario.vista select,.formulario.vista label{
+	color: #000;
+	background-color:#abf;
+}
+		
+.formulario > span{
+	min-height:26px;
+	vertical-align: middle;
+	display:inline-block;
+	color:#55f;
+}
+
+form#adjuntador{
+    left: 451px;
+    position: absolute;
+    top: 27px;
+}		
+		
+	input#link{
+		width: 236px;
+	}		
+		
+#inputsubmit{
+	position:absolute;
+	top:0px;
+	right:0px;
+	width:100px;
+}	
+#inputnuevo{
+	position:absolute;
+	top:44px;
+	right:0px;
+	width:100px;			
+}
+
+#elimina,#elim,#elimNo{
+	position:absolute;
+	top:22px;
+	right:0px;
+	width:100px;
+}		
+#elimina{
+	position:absolute;
+	display:none;
+	top:42px;
+	background-color:red;
+	color:#fff;
+}			
+
+#texto{
+	display: inline-block;
+	vertical-align: middle;
+    border: 1px solid #55f;
+    font-size: 12px;
+    overflow-y: auto;
+    padding: 5px;
+     height: 100px;
+    width: 530px;
+	color:#55f;
+}
+#texto>p{
+	font-size: 12px;
+	text-align:justify;
+}
+
+.resumen{
+	font-size:15px;
+	font-weight:normal;
+}
+
+#uploadinput{
+	width:90px;
+	margin:0;
+}
+
+#inputcatgorianueva{
+	width:236px;
+}
+
+a.botonamarcar{
+	position:absolute;
+	top:-22px;
+	right:-2px;
+	border-width:2px;
+	border-style:solid;
+}	
+#slider { margin: 10px; }	
+
+#formCoord{
+	
+}
+
+#formCoord input{
+	right:4px;
+	border: 2px solid red;
+	position:absolute;
+	background-color: #ffb;
+	color: #f55;
+	font-size:12px;
+	height: 15px;
+	line-height: 9px;
+	width:103px;
+	padding: 0;
+} 
+
+
+#bloqPu{
+	top:2px;
+}
+#bloqPuNo{
+	top:2px;
+	display:none;
+}
+input#bloqTx{
+	top:21px;
+	display:none;
+	border-color: #008 #88f #88f #008;
+    border-width: 1px;	    
+}
+
+#bloqTxL{
+	top:25px;
+	right:108px;
+    display: none;
+    position:absolute;
+    font-size:12px;
+    color: #f55;
+}	
+#bloqTxVer{
+	top:25px;
+	right:4px;
+	width:200px;
+    display: none;
+    position:absolute;
+    font-size:12px;
+    color: #f55;
+    text-align:right;
+}		
+
+#bloq{
+	top:40px;
+	display:none;
+}
+
+#bloqudescricion{
+	z-index:10;
+    background-color: #fcc;
+    border: 1px solid red;
+    font-size: 12px;
+    padding: 2px;
+    position: absolute;
+    right: 0;
+    top: 67px;
+    width: 200px;
+}
+
+#bloqudescricion>p{
+	font-size:inherit;
+}
+
+#linkimagen{
+	left: 545px;
+    position: absolute;
+    top: 1px;
+    max-height 100px;
+    max-width: 100px;
+}
+
+#formulario[tipo='vista'] #linkimagen{
+	border:1px solid #55f;
+}
+
+#formulario[tipo='edicion'] #linkimagen{
+	border:1px solid #f55;
+}
+	
+#formulario{
+	overflow:hidden;
+}
+#formulario[ventana='cerrada']{
+	height:20px;	
+}
+
+a.av, a.cv{
+	display:block;
+	position:absolute;
+	right:5px;
+	top:2px;
+	background-color:#fff;
+	border: 1px solid  #08AFD9;
+}
+
+a.av{
+	display:none;
+}
+
+#campocategoria{
+	width:100%;
+}
+
+input#bloqPuNo:hover, input#bloqPu:hover, input#bloq:hover{
+	background-color:#d70;
+	color:#000;
+}
+
+iframe#cargaimagen{
+	border:1px solid #f55;
+	display:none;
+}
+#textobreve{
+	width:336px;
+}
+#campotexto > div{
+	display:inline-block;
+}
+
