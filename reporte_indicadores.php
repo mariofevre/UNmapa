@@ -31,7 +31,7 @@
 include('./includes/conexion.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
-	
+ini_set('diasplay_errors,true');
 ?>
 <!DOCTYPE html>
 	<head>
@@ -77,7 +77,8 @@ include("./includes/cadenas.php");
 		    `actividades`.`zz_AUTOFECHACREACION`,
 		    `actividades`.`zz_PUBLICO`
 		    
-		FROM `UNmapa`.`actividades`	
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`	
 		
 		WHERE
 			`actividades`.`zz_borrada` !='1'
@@ -86,10 +87,10 @@ include("./includes/cadenas.php");
 			`actividades`.`zz_AUTOFECHACREACION` ASC
 	
 	";	
-	$ConsultaACT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	echo $Conec1->error;
 	
-	$fila=mysql_fetch_assoc($ConsultaACT);
+	$fila=$Consulta->fetch_assoc();
 	//echo "<pre>";print_r($fila);echo "</pre>";	
 	$ini=primerdiadelmes(sumames($fila['zz_AUTOFECHACREACION'],-2));
 	$hoy=primerdiadelmes(date("Y-m-d"));
@@ -99,8 +100,8 @@ include("./includes/cadenas.php");
 		$ini=messiguiente($ini);
 	}
 	
-	mysql_data_seek($ConsultaACT,0);	
-	while($fila=mysql_fetch_assoc($ConsultaACT)){
+	$Consulta->data_seek(0);	
+	while($fila=$Consulta->fetch_assoc()){
 		foreach($Fechas as $F => $Cont){
 			if(primerdiadelmes($fila['zz_AUTOFECHACREACION'])<=$F){
 				$Fechas[$F]++;
@@ -129,16 +130,17 @@ include("./includes/cadenas.php");
 		SELECT 
 			`zz_AUTOFECHACREACION`
 		    
-		FROM `UNmapa`.`usuarios`	
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`	
 
 		ORDER BY 
 			`zz_AUTOFECHACREACION` ASC
 	
 	";	
-	$ConsultaACT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	echo $Conec1->error;
 	
-	$fila=mysql_fetch_assoc($ConsultaACT);
+	$fila=$Consulta->fetch_assoc();
 	//echo "<pre>";print_r($fila);echo "</pre>";	
 	$ini=primerdiadelmes(sumames($fila['zz_AUTOFECHACREACION'],-2));
 	$hoy=primerdiadelmes(date("Y-m-d"));
@@ -148,8 +150,8 @@ include("./includes/cadenas.php");
 		$ini=messiguiente($ini);
 	}
 	
-	mysql_data_seek($ConsultaACT,0);	
-	while($fila=mysql_fetch_assoc($ConsultaACT)){
+	$Consulta->data_seek(0);		
+	while($fila=$Consulta->fetch_assoc()){
 		foreach($Fechas as $F => $Cont){
 			if(primerdiadelmes($fila['zz_AUTOFECHACREACION'])<=$F){
 				$Fechas[$F]++;
@@ -178,16 +180,18 @@ include("./includes/cadenas.php");
 		SELECT 
 			`zz_AUTOFECHACREACION`
 		    
-		FROM `UNmapa`.`usuarios`	
-		WHERE zz_idactivacion is not null
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`	
+		WHERE 
+			zz_idactivacion is not null
 		ORDER BY 
 			`zz_AUTOFECHACREACION` ASC
 	
 	";	
-	$ConsultaACT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	echo $Conec1->error;
 	
-	$fila=mysql_fetch_assoc($ConsultaACT);
+	$fila=$Consulta->fetch_assoc();
 	//echo "<pre>";print_r($fila);echo "</pre>";	
 	$ini=primerdiadelmes(sumames($fila['zz_AUTOFECHACREACION'],-2));
 	$hoy=primerdiadelmes(date("Y-m-d"));
@@ -197,8 +201,8 @@ include("./includes/cadenas.php");
 		$ini=messiguiente($ini);
 	}
 	
-	mysql_data_seek($ConsultaACT,0);	
-	while($fila=mysql_fetch_assoc($ConsultaACT)){
+	$Consulta->data_seek(0);		
+	while($fila=$Consulta->fetch_assoc()){
 		foreach($Fechas as $F => $Cont){
 			if(primerdiadelmes($fila['zz_AUTOFECHACREACION'])<=$F){
 				$Fechas[$F]++;
@@ -230,16 +234,18 @@ include("./includes/cadenas.php");
 		SELECT 
 			fecha, id_usuarios
 		    
-		FROM `UNmapa`.`geodatos`	
-		WHERE zz_borrada = '0'
+		FROM
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`	
+		WHERE
+			zz_borrada = '0'
 		ORDER BY 
 			fecha ASC
 	
 	";	
-	$ConsultaACT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	echo $Conec1->error;
 	
-	$fila=mysql_fetch_assoc($ConsultaACT);
+	$fila=$Consulta->fetch_assoc();
 	//echo "<pre>";print_r($fila);echo "</pre>";	
 	$ini=primerdiadelmes(sumames($fila['fecha'],-2));
 	echo "ini: $ini";
@@ -251,8 +257,8 @@ include("./includes/cadenas.php");
 		$ini=messiguiente($ini);
 	}
 	
-	mysql_data_seek($ConsultaACT,0);
-	while($fila=mysql_fetch_assoc($ConsultaACT)){
+	$Consulta->data_seek(0);	
+	while($fila=$Consulta->fetch_assoc()){
 		foreach($Fechas as $F => $Cont){
 			//echo "<br>".primerdiadelmes($fila['fecha']). " <= ". $F;
 			if(primerdiadelmes($fila['fecha'])<=$F){
@@ -285,16 +291,18 @@ include("./includes/cadenas.php");
 		SELECT 
 			fecha, id_usuarios
 		    
-		FROM `UNmapa`.`geodatos`	
-		WHERE zz_borrada = '0'
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`	
+		WHERE 
+			zz_borrada = '0'
 		ORDER BY 
 			fecha ASC
 	
 	";	
-	$ConsultaACT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	echo $Conec1->error;
 	
-	$fila=mysql_fetch_assoc($ConsultaACT);
+	$fila=$Consulta->fetch_assoc();
 	//echo "<pre>";print_r($fila);echo "</pre>";	
 	$ini=primerdiadelmes(sumames($fila['fecha'],-2));
 	echo "ini: $ini";
@@ -306,8 +314,8 @@ include("./includes/cadenas.php");
 		$ini=messiguiente($ini);
 	}
 
-	mysql_data_seek($ConsultaACT,0);
-	while($fila=mysql_fetch_assoc($ConsultaACT)){
+	$Consulta->data_seek(0);
+	while($fila=$Consulta->fetch_assoc()){
 		if(!isset($Usu[$fila['id_usuarios']])){$Usu[$fila['id_usuarios']]['Fmin']=$fila['fecha'];}
 		$Usu[$fila['id_usuarios']]['Fmin']=min($Usu[$fila['id_usuarios']]['Fmin'],$fila['fecha']);
 	}

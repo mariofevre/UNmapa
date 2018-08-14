@@ -29,7 +29,7 @@
 * Si usted no cuenta con una copia de dicha licencia puede encontrarla aquí: <http://www.gnu.org/licenses/>.
 */
 
-
+ini_set('display_errors', '1');
 //if($_SERVER[SERVER_ADDR]=='192.168.0.252')ini_set('display_errors', '1');ini_set('display_startup_errors', '1');ini_set('suhosin.disable.display_errors','0'); error_reporting(-1);
 
 // verificación de seguridad 
@@ -40,10 +40,10 @@ include('./includes/conexionusuario.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
-// función de consulta de actividades a la base de datos 
+// función de consulta de actividades a la base de datos
 include("./actividades_consulta.php");
 
 $ID = isset($_GET['actividad'])?$_GET['actividad'] : '';
@@ -52,31 +52,6 @@ $Hoy_a = date("Y");
 $Hoy_m = date("m");	
 $Hoy_d = date("d");
 $HOY = $Hoy_a."-".$Hoy_m."-".$Hoy_d;	
-
-// el reingreso a esta dirección desde su propio formulario php crea o modifica un registro de actividad 
-if(isset($_POST['accion'])){
-	$accion =$_POST['accion'];
-	
-	if($accion=='crear'&&$UsuarioI>0){
-		$query="
-		INSERT INTO 
-			`UNmapa`.`actividades`
-			SET
-			`zz_AUTOUSUARIOCREAC`='".$UsuarioI."',
-			`zz_AUTOFECHACREACION`='".$HOY."'
-		";
-		mysql_query($query,$Conec1);
-		$NID=mysql_insert_id($Conec1);
-		if($NID!=''){
-			$ID=$NID;
-			header('location: ./actividad_config.php?actividad='.$ID);
-		}else{
-			$mensaje.="<div class='error'>no se ha podido crear el nuevo registro, por favor vuelva a intentar</div>";
-			$mensaje.= mysql_error($Conec1);
-		}
-		
-	}
-}
 
 	
 // medicion de rendimiento lamp 
@@ -106,7 +81,9 @@ if(isset($_POST['accion'])){
 	// función para obtener listado formateado html de actividades 
 	$Contenido =  actividadeslistado($ID, null);
 ?>
-
+<!DOCTYPE html>
+<html>
+<head>
 	<title>UNmapa - Listado de actividades</title>
 	<?php include("./includes/meta.php");?>
 	<link href="./css/UNmapa.css" rel="stylesheet" type="text/css">
@@ -155,65 +132,71 @@ if(isset($_POST['accion'])){
 			  border: 1px solid #55a;				
 		}
 			
-			.resultado[estado='cerrada']{
-				  background-color: #abf;
-				  color: #000;
-				  border: 1px solid #55f;
-			}
-			
-			.resultado[estado='activa']{
-			    background-color: #ffb;
-			    border: 1px solid #f55;
-			}
+		.resultado[estado='cerrada']{
+			  background-color: #abf;
+			  color: #000;
+			  border: 1px solid #55f;
+		}
+		
+		.resultado[estado='activa']{
+		    background-color: #ffb;
+		    border: 1px solid #f55;
+		}
 	</style>
 	
 	
 </head>
 
 <body>
-	
+	<script src="./js/jquery-ui-1.11.4.custom/external/jquery/jquery.js"></script>
 	<?php
 	include('./includes/encabezado.php');
-	
-	if($ID!=''){
-	?>	
-		<iframe class='recuadro' id="recuadro2" src="./argumentacionimagen.php"></iframe>
-		<iframe class='recuadro' id="recuadro3" src="./argumentacionlocalizacion.php"></iframe>
-	<?php
-	}
 	?>
-	
 	
 	<div id="pageborde"><div id="page">
 		<h1>Actividades</h1>
 		<p>Actividad, descripción de la actividad.</p>
 
 		<iframe src='./MAPAgeneral.php'></iframe>
-		
-		<?php
-
-			// formulario para agregar una nueva actividad		
-		if($ID==''){
-			echo "<form method='post' action='./actividades.php'>";
-			echo "<input type='submit' value='Crear una nueva actividad'>";
-			echo "<input type='hidden' name='accion' value='crear'>";
-			echo "<input type='hidden' name='tabla' value='actividades'>";			
-			echo "</form>";
-			echo "<div class='contenido'>";
-			echo $Contenido;
-			echo "</div>";				
-		}
-		?>
-	
+		<form method='post' onsubmit='crearActividad(event)'>
+			<input type='submit' value='Crear una nueva actividad'>			
+		</form>
+		<div class='contenido'>
+			<?php echo $Contenido;?>
+		</div>				
 	</div></div>
 	
+<script type='text/javascript'>
 
+function crearActividad(_event){
+	
+	_event.preventDefault();
+	_datos={
+		'accion':'crear'
+		}
+	$.ajax({
+		data: _datos,
+		url:   './actividades_crear.php',
+		type:  'post',
+		success:  function (response){
+			var _res = $.parseJSON(response);
+			
+			console.log(_res);
+			
+			if(_res.res='exito'){
+				window.location.reload();
+			}
+			
+		}
+	})
+}
+	
+	
+	
+</script>
 <?php
-include('./includes/pie.php');
-	/*medicion de rendimiento lamp*/
-	$endtime = microtime(true);
-	$duration = $endtime - $starttime;
-	$duration = substr($duration,0,6);
-	echo "<br>tiempo de respuesta : " .$duration. " segundos";
+include('./_serverconfig/pie.php');
 ?>
+
 </body>
+<html>

@@ -48,7 +48,8 @@ function terminar($Log){
 	exit;
 }
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
+
 if($UsuarioI==""){header('Location: ./login.php');}
 
 $HOY=date("Y-m-d");
@@ -115,20 +116,23 @@ $query="
 	    `actividades`.`zz_borrada`,
 	    `actividades`.`zz_AUTOFECHACREACION`,
 	    `actividades`.`zz_PUBLICO`
-	FROM `UNmapa`.`actividades`
+	FROM
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`
 	WHERE 
-	id='".$_POST['aid']."'
+		id='".$_POST['aid']."'
 ";
 
-$Consulta = mysql_query($query,$Conec1);
+$Consulta = $Conec1->query($query);
 
-if(mysql_error($Conec1)!=''){
-	$Log['tx'][]=mysql_error($Conec1);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= utf8_encode($query);
 	$Log['tx'][]= 'error al consultar base';
 	terminar($Log);
 }
-$Actividad=mysql_fetch_assoc($Consulta);
+$Actividad=$Consulta->fetch_assoc();
+
+
 $query="	
 	SELECT 
 		`ACTaccesos`.`id`,
@@ -137,21 +141,26 @@ $query="
 	    `ACTaccesos`.`nivel`,
 	    `ACTaccesos`.`autorizado`
 	FROM 
-		`UNmapa`.`ACTaccesos`
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
 	WHERE
 		id_actividades='".$_POST['aid']."'
-		AND
-		id_usuarios='".$usuarioI."'
+	AND
+		id_usuarios='".$UsuarioI."'
 ";
-$Consulta = mysql_query($query,$Conec1);
-if(mysql_error($Conec1)!=''){
-	$Log['tx'][]=mysql_error($Conec1);
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= $query;
 	$Log['tx'][]= 'error al consultar base';
 	terminar($Log);
 }
 $Actividad['docente']='0';
-while($fila=mysql_fetch_assoc($Consulta)){
+
+if($Actividad['zz_AUTOUSUARIOCREAC']==$UsuarioI){
+	$Actividad['docente']='1';
+	$fila['nivel']=3;
+}
+while($fila=$Consulta->fetch_assoc()){
 	$Log['tx'][]=$fila['nivel'];
 	$Log['tx'][]=$Actividad['zz_AUTOUSUARIOCREAC'];
 	$Log['tx'][]=$UsuarioI;
@@ -174,8 +183,6 @@ if(
 	
 
 
-
-
 if(
 	$_POST['nuevacategoria']!="-escriba el nombre de la nueva categoría-"
 	&&
@@ -183,56 +190,89 @@ if(
 	&&
 	$Actividad['categLib']==1
 ){
-	
+					
+					
 	$query="
-	
-	INSERT INTO
-		 `UNmapa`.`ACTcategorias`
-		SET
-		`id_p_actividades_id`= '".$_POST['aid']."',
-		`nombre`= '".$_POST['nuevacategoria']."',
-		zz_AUTOUSUARIOCREAC= '".$UsuarioI."'
+	SELECT
+		*
+	FROM
+		 `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
+	WHERE
+			`id_p_actividades_id`= '".$_POST['aid']."'	
 	";
-	$Consulta = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
 		$Log['tx'][]= $query;
 		$Log['tx'][]= 'error al crear categoria';
 		terminar($Log);
 	}
-	$CnID=mysql_insert_id($Conec1);
-	
-	if($CnID<1){
-		$Log['tx'][]=mysql_error($Conec1);
-		$Log['tx'][]= $query;
-		$Log['tx'][]= 'error al crear categoria';
-		terminar($Log);
-	}	
-	$_POST['categoria']=$CnID;
+	$yaExiste='no';
+	$stu=eliminarTildes(strtolower(str_replace(' ','',$_POST['nuevacategoria'])));
+	while($fila=$Consulta->fetch_assoc()){		
+		$stb=eliminarTildes(strtolower(str_replace(' ','',$fila['nombre'])));
+		if($stu==$stb){
+			$yaExiste='si';
+			$_POST['categoria']=$fila['id'];
+			$Log['mg'][]=utf8_encode('Se encontró una categoría con un nombre similar, su registro fue vinculado a:'.$fila['nombre']);
+			break;
+		}
+	}		
+		
+			
+	if($yaExiste=='no'){
+		$query="
+			INSERT INTO
+			 	`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
+			SET
+				`id_p_actividades_id`= '".$_POST['aid']."',
+				`nombre`= '".$_POST['nuevacategoria']."',
+				zz_AUTOUSUARIOCREAC= '".$UsuarioI."'
+		";
+		$Consulta = $Conec1->query($query);
+		if($Conec1->error!=''){
+			$Log['tx'][]=$Conec1->error;
+			$Log['tx'][]= $query;
+			$Log['tx'][]= 'error al crear categoria';
+			terminar($Log);
+		}
+		$_POST['categoria']=$Consulta->insert_id;
+		
+		if($_POST['categoria']<1){
+			$Log['tx'][]=$Conec1->error;
+			$Log['tx'][]= $query;
+			$Log['tx'][]= 'error al crear categoria';
+			terminar($Log);
+		}	
+	}
 }
 	
 $query="
+
 	INSERT INTO
-		`UNmapa`.`geodatos`
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`
 	SET
 		`x` = '".$_POST['x']."',
 		`y` = '".$_POST['y']."',
 		`z` = '".$_POST['z']."',
 		`id_usuarios` = '".$_POST['uid']."',
 		`id_actividades` = '".$_POST['aid']."',
-		`fecha` = '".$HOY."'
+		`fecha` = '".$HOY."',
+		`xPsMerc`= '".$_POST['xPsMerc']."',
+		`yPsMerc`= '".$_POST['yPsMerc']."',
+		`zResPsMerc`= '".$_POST['zResPsMerc']."'
 ";
-$Consulta = mysql_query($query,$Conec1);
-if(mysql_error($Conec1)!=''){
-	$Log['tx'][]=mysql_error($Conec1);
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= $query;
 	$Log['tx'][]= 'error al consultar base';
 	terminar($Log);
 }
-$NID=mysql_insert_id($Conec1);
+$NID=$Conec1->insert_id;
 
 if($NID<1){
-	$Log['tx'][]=mysql_error($Conec1);
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= $query;
 	$Log['tx'][]= 'error al consultar base';
 	terminar($Log);
@@ -241,7 +281,7 @@ if($NID<1){
 $query="
 
 INSERT INTO 
-	`UNmapa`.`atributos`
+	`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`atributos`
 SET
 	`atributos`.`id` = '".$NID."',
     `atributos`.`valor` = '".$_POST['valor']."',
@@ -253,12 +293,12 @@ SET
     `atributos`.`id_actividades`= '".$_POST['aid']."',
     `atributos`.`fecha` = '".$_POST['valor']."',
     `atributos`.`escala` = '".$_POST['valor']."',
-    `atributos`.`nivelUsuario` = '".$$USUARIO['nivel']."',
-    `atributos`.`areaUsuario` = '".$$USUARIO['organizacion']."'
+    `atributos`.`nivelUsuario` = '".$_SESSION['Unmapa'][$CU]->USUARIO['nivel']."',
+    `atributos`.`areaUsuario` = '".$_SESSION['Unmapa'][$CU]->USUARIO['organizacion']."'
 ";
-$Consulta = mysql_query($query,$Conec1);
-if(mysql_error($Conec1)!=''){
-	$Log['tx'][]=mysql_error($Conec1);
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= $query;
 	$Log['tx'][]= 'error al consultar base';
 	terminar($Log);

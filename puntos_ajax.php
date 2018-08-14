@@ -34,9 +34,10 @@
 include('./includes/conexion.php');
 include('./includes/conexionusuario.php');
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
+ini_set('display_errors',true);
 
 if(isset($_POST['tipo']))
 	$tipo=$_POST['tipo'];
@@ -72,51 +73,58 @@ else
 
 if ($tipo == 1) {
 	//Tipo de consulta de puntos de la misma actividad
-	$query="SELECT distinct `geodatos`.id_actividades,
-`geodatos`.`id`,	
-`geodatos`.`x`,
-`geodatos`.`y`,
-`geodatos`.`z`,
-z - $zoom + case when `geodatos`.id_usuarios = $UsuarioI then 0 else 2 end ranking,
-`geodatos`.`zz_bloqueado`,
-`geodatos`.`zz_bloqueadoTx`,
-`geodatos`.`zz_bloqueadoUsu`,
-atributos.valor,
-atributos.valor,
-atributos.textobreve,
-atributos.link,
-ACTcategorias.CO_color color,
-ACTcategorias.nombre nombreCategoria,
-atributos.texto,
-concat(concat(usuarios.nombre, ' '), usuarios.apellido) as nombreUsuario,
-actividades.valorAct valorAct,
-actividades.categAct categAct 
-FROM `UNmapa`.`geodatos`
-left outer JOIN UNmapa.actividades on `geodatos`.id_actividades = actividades.id
-left outer JOIN UNmapa.atributos on `geodatos`.id = atributos.id
-left outer JOIN UNmapa.ACTcategorias on atributos.categoria = ACTcategorias.id
-left outer JOIN UNmapa.usuarios on geodatos.id_usuarios = usuarios.id
-where 
-geodatos.zz_borrada='0' and actividades.zz_borrada='0'
-and x >= $x0 and x <= $xf and y >= $y0 and y <= $yf 
-/*and z >= $zoom*/ and `geodatos`.id_actividades = $actividad
-order by ranking
-/*limit 100*/";
+	$query="
+	SELECT distinct `geodatos`.id_actividades,
+		`geodatos`.`id`,	
+		`geodatos`.`x`,
+		`geodatos`.`y`,
+		`geodatos`.`z`,
+		z - $zoom + case when `geodatos`.id_usuarios = $UsuarioI then 0 else 2 end ranking,
+		`geodatos`.`zz_bloqueado`,
+		`geodatos`.`zz_bloqueadoTx`,
+		`geodatos`.`zz_bloqueadoUsu`,
+		atributos.valor,
+		atributos.valor,
+		atributos.textobreve,
+		atributos.link,
+		ACTcategorias.CO_color color,
+		ACTcategorias.nombre nombreCategoria,
+		atributos.texto,
+		concat(concat(usuarios.nombre, ' '), usuarios.apellido) as nombreUsuario,
+		actividades.valorAct valorAct,
+		actividades.categAct categAct 
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`
+			left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.actividades on `geodatos`.id_actividades = actividades.id
+			left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.atributos on `geodatos`.id = atributos.id
+			left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.ACTcategorias on atributos.categoria = ACTcategorias.id
+			left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.usuarios on geodatos.id_usuarios = usuarios.id
+	where 
+		geodatos.zz_borrada='0' and actividades.zz_borrada='0'
+		and x >= $x0 and x <= $xf and y >= $y0 and y <= $yf 
+		/*and z >= $zoom*/ and `geodatos`.id_actividades = $actividad
+		order by ranking
+		/*limit 100*/
+	";
 	
 	$maxPuntos = 1000;//Lo comentamos porque se solicito que de la actividad se muestren todos los puntos $_SESSION['sigsao']->MAX_VISIBLE_ACTIVITY_POINTS;
 	
 }
 else {
 	//Tipo de consulta de puntos de otras actividades
-	$query="SELECT distinct `geodatos`.id_actividades,
+	$query="
+	SELECT distinct `geodatos`.id_actividades,
 		`geodatos`.`id`,	
 		`geodatos`.`x`,
 		`geodatos`.`y`,
 		`geodatos`.`z`,
+		`geodatos`.`xPsMerc`,
+    	`geodatos`.`yPsMerc`,
+    	`geodatos`.`zResPsMerc`,
 		`geodatos`.`zz_bloqueado`,
 		`geodatos`.`zz_bloqueadoTx`,
 		`geodatos`.`zz_bloqueadoUsu`,
-		z - $zoom + case when `geodatos`.id_usuarios = $UsuarioI then 0 else 3 end - (select count(a.id_p_TAGs_id) from UNmapa.ACTtags a where a.id_p_actividades_id = $actividad
+		z - $zoom + case when `geodatos`.id_usuarios = $UsuarioI then 0 else 3 end - (select count(a.id_p_TAGs_id) from `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.ACTtags a where a.id_p_actividades_id = $actividad
 		and a.id_p_TAGs_id = ACTtags.id_p_TAGs_id) ranking,
 		atributos.valor,
 		atributos.categoria, 
@@ -127,37 +135,39 @@ else {
 		concat(concat(usuarios.nombre, ' '), usuarios.apellido) as nombreUsuario,
 		actividades.valorAct valorAct,
 		actividades.categAct categAct
-		FROM `UNmapa`.`geodatos` 
-		left outer JOIN UNmapa.actividades on `geodatos`.id_actividades = actividades.id
-		left outer JOIN UNmapa.atributos on `geodatos`.id = atributos.id
-		left outer JOIN UNmapa.ACTcategorias on atributos.categoria = ACTcategorias.id
-		left outer JOIN UNmapa.usuarios on geodatos.id_usuarios = usuarios.id
-		left outer JOIN UNmapa.ACTtags on ACTtags.id_p_actividades_id = geodatos.id_actividades
-		where 
+	FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos` 
+		left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.actividades on `geodatos`.id_actividades = actividades.id
+		left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.atributos on `geodatos`.id = atributos.id
+		left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.ACTcategorias on atributos.categoria = ACTcategorias.id
+		left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.usuarios on geodatos.id_usuarios = usuarios.id
+		left outer JOIN `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.ACTtags on ACTtags.id_p_actividades_id = geodatos.id_actividades
+	where 
 		geodatos.zz_borrada='0' and actividades.zz_borrada='0'
 		and atributos.id is not null  
 		and usuarios.id > 0
 		and zz_bloqueado='0'
-		and x >= $x0 and x <= $xf and y >= $y0 and y <= $yf
+		and xPsMerc >= $x0 and xPsMerc <= $xf and yPsMerc >= $y0 and yPsMerc <= $yf
 		".
 		// lo que sigue restringe la búsqueda solo dentro del área de la actividad and exists (select 1 from UNmapa.actividades where actividades.id = $actividad and x >= actividades.x0 and x <= actividades.xf and y <= actividades.y0 and y >= actividades.yf)
-		"and z >= $zoom and `geodatos`.id_actividades != $actividad
+		//and z >= $zoom 
+		" and `geodatos`.id_actividades != $actividad
 		order by ranking
 		limit 100";
 	$maxPuntos = 15;//Lo comentamos porque se solicito que de la actividad se muestren todos los puntos $_SESSION['sigsao']->MAX_VISIBLE_ACTIVITY_POINTS;
 }
 
-$ConsultaGEO = mysql_query($query,$Conec1);
-echo mysql_error($Conec1);
+//echo $query.PHP_EOL;
+$ConsultaGEO = $Conec1->query($query);
+echo $Conec1->error;
 
 
 $codif=array('nombreCategoria','texto','nombreUsuario','textobreve');
 
 $puntos = array();
-if (mysql_num_rows($ConsultaGEO) > 0) {
+if ($ConsultaGEO->num_rows > 0) {
 	
 	$index = 0;
-	while($fila=mysql_fetch_assoc($ConsultaGEO)){
+	while($fila=$ConsultaGEO->fetch_assoc()){
 		if ($index < $maxPuntos) {
 			foreach($codif as $c){
 				$fila[$c]=utf8_encode($fila[$c]);

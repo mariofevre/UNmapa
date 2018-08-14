@@ -5,14 +5,13 @@
 * aplicación para cargar nuevos puntos de relevamiento
 *  
 * 
-* @package    	Plataforma Colectiva de Información Territorial: UBATIC2014
+* @package    	UNmapa: Universidad Nacional de Moreno
 * @subpackage 	actividad
-* @author     	Universidad de Buenos Aires
+* @author     	Universidad Nacional deMoreno
 * @author     	<mario@trecc.com.ar>
-* @author    	http://www.uba.ar/
-* @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
-* @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
-* @copyright	2015 Universidad de Buenos Aires
+* @author    	http://www.unm.edu.ar/
+* @author		based on mapauba. www.uba.ar
+* @copyright	2017 Universidad Nacional de Moreno
 * @copyright	esta aplicación se desarrollo sobre una publicación GNU (agpl) 2014 TReCC SA
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
@@ -31,7 +30,9 @@
 
 //if($_SERVER[SERVER_ADDR]=='192.168.0.252')ini_set('display_errors', '1');ini_set('display_startup_errors', '1');ini_set('suhosin.disable.display_errors','0'); error_reporting(-1);
 
+
 ini_set('display_errors',true);
+
 
 
 // verificación de seguridad 
@@ -42,7 +43,7 @@ include('./includes/conexionusuario.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){
 	$e=explode('/',__FILE__);
 	$f=$e[(count($e)-1)];
@@ -73,39 +74,14 @@ if(isset($_POST['actividad'])){
 }else{
 	$Actividad='';
 }
-if($Actividad==''){
-	header('location: ./actividades.php');	//si no hay una actividad definida esta página no debería consultarse
-	echo "ERROR de Acceso 1";
-	break;
-}
 
+if($Actividad==''){
+	//header('location: ./actividades.php');	//si no hay una actividad definida esta página no debería consultarse
+	echo "ERROR de Acceso 1";
+	//break;
+}
 
 $UsuariosList = usuariosconsulta($ID);
-
-// el reingreso a esta dirección desde su propio formulario php crea o modifica un registro de actividad 
-if(isset($_POST['accion'])){
-	$accion =$_POST['accion'];
-	
-	if($accion=='crear'){
-		$query="
-		INSERT INTO 
-			`UNmapa`.`actividades`
-			SET
-			`zz_AUTOUSUARIOCREAC`='".$UsuarioI."'
-		";
-		mysql_query($query,$Conec1);
-		$NID=mysql_insert_id($Conec1);
-		if($NID!=''){
-			$ID=$NID;
-		}else{
-			$mensaje="<div class='error'>no se ha podido crear el nuevo registro, por favor vuelva a intentar}";
-		}
-	}	
-}
-
-
-// medicion de rendimiento lamp 
-$starttime = microtime(true);
 
 // filtro de representación restringe documentos visulazados, no altera datos estadistitico y de agregación 
 $FILTRO=isset($_GET['filtro'])?$_GET['filtro']:'';	
@@ -130,16 +106,18 @@ if($fechahasta_a!='0000'&&$fechahasta_m!='00'&&$fechahasta_d!='00'){
 
 $seleccion['zoom'] = 0;
 
-// función para obtener listado formateado html de actividades 
-$Contenido =  reset(actividadesconsulta($ID,$seleccion));
+// función para obtener listado formateado html de actividades
+$res= actividadesconsulta($ID,$seleccion);
+$Contenido =  reset($res);
 //echo "<pre>";print_r($Contenido);echo "</pre>";
 
-
+	if(!isset($Contenido['Acc'][2])){$Contenido['Acc'][2]=array();}
 	foreach($Contenido['Acc'][2] as $acc => $accdata){
 		if($accdata['id_usuarios']==$UsuarioI){
 			$Coordinacion='activa';
 		}
 	}
+if(!isset($Contenido['Acc'][3])){$Contenido['Acc'][3]=array();}
 	foreach($Contenido['Acc'][3] as $acc => $accdata){
 		if($accdata['id_usuarios']==$UsuarioI){
 			$Administracion='activa';
@@ -147,16 +125,17 @@ $Contenido =  reset(actividadesconsulta($ID,$seleccion));
 		}
 	}
 
-$Actividad=reset(actividadesconsulta($ID,$seleccion));
-//echo "<pre>";print_r($Actividad);echo "</pre>";
+$res=actividadesconsulta($ID,$seleccion);
+$Actividad=reset($res);
 if($Actividad['zz_PUBLICO']!='1'&&$Actividad['zz_AUTOUSUARIOCREAC']!=$UsuarioI){
 	echo "<h2>Error en el acceso, esta actividad no se encuentra aún publicada y usted no se encuentra registrado como autor de la misma.</h2>";
-	break;
+	exit();
 }
 
 if($RID>0){
 
 }
+
 ?>	<title>UNmapa - Área de Trabajo</title>
 	<?php include("./includes/meta.php");?>
 	<link href="css/treccppu.css" rel="stylesheet" type="text/css">
@@ -168,7 +147,23 @@ if($RID>0){
   <link rel="stylesheet" href="./js/jquery-ui-1.11.4.custom/jquery-ui.css">
 
   <style>
-
+  	#bloquIdent{
+  		position:absolute;
+  		top:0px;
+  		left:2px;
+  		font-size:50%;
+  	}
+	#bloquIdent p{
+		font-size:120%;
+		color:#55f;
+	}
+	#bloquIdent p span{
+		font-size:140%;
+	}
+	#formulario[tipo='edicion'] #bloquIdent p{
+		font-size:120%;
+		color:#f55;
+	}	
   </style>
   
 
@@ -180,6 +175,10 @@ if($RID>0){
 	<!-- este proyecto recurre al proyecto tiny_mce para las funciones de edición de texto -->
 	<script type="text/javascript" src="./js/tinymce43/tinymce.min.js"></script>
 	
+	
+	<script type="text/javascript">
+		_IdReg = '<?php echo $RID;?>';
+	</script>
 
 	
 	<script>	 
@@ -191,9 +190,7 @@ if($RID>0){
 	      value: 100,
 	      slide: function( event, ui ) {
 	      	     _listado= document.getElementById('puntosdeactividad');	
-	      /*_porc = 100 * _listado.scrollHeight / (_listado.scrollHeight-_listado.clientHeight); 
-	      
-	      px= ;*/
+
 	     	_ch=_listado.clientHeight;
 	     	_sh=_listado.scrollHeight-_ch;
 	        $( "#puntosdeactividad" ).scrollTop( (_sh/100)*(100-ui.value) );
@@ -227,10 +224,12 @@ if($RID>0){
 		<h1>Actividad: <span class='resumen'><?php echo $Actividad['resumen'];?></span></h1>
 		
 		<?php
+
 		if($Coordinacion=='activa'){
 			echo "<a href='./actividad_config.php?actividad=$ID'>configurar esta actividad</a>";
 		}
-		echo " / <span class='menor'>web de acceso directo: <span class='resaltado'>http://190.111.246.33/UNmapa/actividad.php?actividad=$ID</span></span>";	
+		
+		echo " / <span class='menor'>web de acceso directo: <span class='resaltado'>".$_SERVER['HTTP_REFERER']."?actividad=".$ID."</span></span>";	
 		if($RID>0){$cons='verpuntos';}else{$cons='marcarpuntos';}	
 		
 	
@@ -238,7 +237,7 @@ if($RID>0){
 		// formulario para agregar una nueva actividad		
 		if($ID==''){
 			echo "la actividad no fue llamada correctamnte";
-			break;
+			exit;
 		}
 			
 			echo "<p>".nl2br($Actividad['consigna'])."</p>";				
@@ -267,6 +266,12 @@ if($RID>0){
 	</div>
 					
 	<div id='formulario' tipo='vista' class='formulario vista'>
+		
+		<div id='bloquIdent'>
+			<p>autoría: <span id='autoria'></span></p>
+			<p>punto: <span id='idtx'></span></p>
+		</div>
+		
 		<div id='bloqudescricion'>
 			<p>Retirado por: <span id='bAu'></span></p>
 			<p>Mensaje: <span id='bTx'></span></p>
@@ -294,7 +299,7 @@ if($RID>0){
 				id='bloqPu' 
 				modo='reinc'
 				type='button' 
-				value='Retincorporar Punto'  
+				value='Reincorporar Punto'  
 				title='Al reincorporarse el punto volverá a ser visible por todos los participantes' 
 				onclick='desbloquearPunto(this)'
 			>
@@ -324,11 +329,14 @@ if($RID>0){
 		<label class='lon' for='x'>Lon:</label><span type='text' name='x' id='x'></span>
 		<input type='hidden' name='z' id='z' value=''>
 		<input type='hidden' id='actividad' name='actividad' value=''>	
+					<input type='hidden' name='xPsMerc' id='xPsMerc' value=''>
+			<input type='hidden' name='yPsMerc' id='yPsMerc' value=''>
+			<input type='hidden' name='zResPsMerc' id='zResPsMerc' value=''>
 		<br>
 		
 		<div id='campolink'>
 			<label for='link'></label>
-			<span id='link'>
+			<span id='link'></span>
 			<a id='linkweb' title='' target='_blank' href=''>ver link</a>
 			<a id='linkarchivo'  href='' download>/ descargar</a>	
 			<img id='linkimagen' src=''>
@@ -358,6 +366,11 @@ if($RID>0){
 
 									
 	<div class='formulario activo' id='formulario' tipo='edicion'>
+		<div id='bloquIdent'>
+			<p>autoría: <span id='autoria'></span></p>
+			<p>punto: <span id='idtx'></span></p>
+		</div>
+		
 		<div id='bloqudescricion'>
 			<p>Retirado por: <span id='bAu'></span></p>
 			<p>Mensaje: <span id='bTx'></span></p>
@@ -372,6 +385,9 @@ if($RID>0){
 			<label for='y'>Lat :</label> <input readonly type='text' name='y' id='y' value=''>
 			<label class='lon' for='x'>Lon :</label> <input readonly type='text' name='x' id='x' value=''>
 			<input type='hidden' name='z' id='z' value=''>
+			<input type='hidden' name='xPsMerc' id='xPsMerc' value=''>
+			<input type='hidden' name='yPsMerc' id='yPsMerc' value=''>
+			<input type='hidden' name='zResPsMerc' id='zResPsMerc' value=''>
 			<br>
 			
 			<div id='campolink'>
@@ -424,7 +440,7 @@ if($RID>0){
 		<form id='adjuntador' enctype='multipart/form-data' method='post' action='./agrega_adjunto.php' target='cargaimagen'>			
 			<label style='position:relative;' class='upload'>							
 			<span id='upload' style='position:absolute;top:0px;left:0px;'>arrastre o busque aquí un archivo</span>
-			<input id='uploadinput' style='position:relative;opacity:0;' type='file' name='upload' value='' onchange='this.parentNode.parentNode.submit();'></label>
+			<input id='uploadinput' style='position:relative;opacity:0;' type='file' name='upload' value='' onchange='enviarAdjunto(this,event);'></label>
 			<input type='hidden' id='actividad' name='actividad' value='<?php echo $Actividad['id'];?>'>
 		</form>
 		<iframe id='cargaimagen' name='cargaimagen'></iframe>
@@ -433,6 +449,8 @@ if($RID>0){
 	
 </div>
 </div>
+
+
 
 	<script type="text/javascript">
 	
@@ -446,7 +464,8 @@ if($RID>0){
 	</script>
 	
 <script type="text/javascript">
-
+	var _StatusEnvio='listo';
+	
 	var _CargandoFormulario ='no';
 
 	var _Uid='<?php echo $UsuarioI;?>';
@@ -457,6 +476,8 @@ if($RID>0){
 	var _mapainicialCargado='no';
 	var _actividadConsultada='no';
 	var _Aactiva='no';	
+	
+	
 	
 	function reiniciar(){		
 		vaciarFormularioEdicion();	
@@ -476,7 +497,12 @@ if($RID>0){
 		consultaActividad();
 	}
 
-	function consultaActividad(){   
+	function consultaActividad(){
+		if(_StatusEnvio!='listo'){
+			alert('sistema ocupado, reintente en unos segundos');
+			console.log('el sistema de envió está acupado');
+			return;
+		}   
 		_datos={};
 		_datos["aid"]=_Aid;
 	
@@ -525,7 +551,18 @@ if($RID>0){
 			
 		_pf.querySelector('#bloqudescricion #bAu').innerHTML='';
 		_pf.querySelector('#bloqudescricion #bTx').innerHTML='';
-				
+	
+		_pf.querySelector('#bloquIdent #autoria').innerHTML='';
+		_pf.querySelector('#bloquIdent #idtx').innerHTML='';		
+	
+		if(_ac.adjuntosAct=='1'){
+			_pf.querySelector('#campolink').style.display='inline-block';
+			_pf.querySelector('#adjuntador').style.display='inline-block';
+		}else{
+			_pf.querySelector('#campolink').style.display='none';
+			_pf.querySelector('#adjuntador').style.display='none';
+		}
+		
 		_pf.querySelector('#link').value='';	
 		_pf.querySelector('#linkimagen').removeAttribute('src');
 		_pf.querySelector('#linkweb').removeAttribute('href');
@@ -653,12 +690,26 @@ if($RID>0){
 		if(_ac.textoAct=='1'){_pf.querySelector('#campotexto').style.display='inline-block';
 		}else{_pf.querySelector('#campotexto').style.display='none';}
 
-		if(_ac.textobreveAct=='1'){_pf.querySelector('#campotextobreve').style.display='inline-block';
+		if(_ac.textobreveAct=='1'){_pf.querySelector('#campotextobreve').style.display='block';
 		}else{_pf.querySelector('#campotextobreve').style.display='none';}
-		
 		
 		if(_ac.categAct=='1'){_pf.querySelector('#campocategoria').style.display='inline-block';
 		}else{_pf.querySelector('#campocategoria').style.display='none';}
+		
+		
+		if(_ac.adjuntosAct=='1'){
+			_pf.querySelector('#campolink').style.display='inline-block';
+			if(_ac.editor=='1'){
+				_pf.querySelector('#adjuntador').style.display='inline-block';
+			}
+		}else{
+			_pf.querySelector('#campolink').style.display='none';
+			if(_ac.editor=='1'){
+				_pf.querySelector('#adjuntador').style.display='none';
+			}
+		}
+		
+		
 		
 		_pf.querySelector('label[for="link"]').innerHTML=_ac.adjuntosDat+" :";
 		_pf.querySelector('label[for="valor"]').innerHTML=_ac.valorDat+" :";
@@ -684,6 +735,11 @@ if($RID>0){
 			_pf.querySelector('#y')[_in]='';
 			_pf.querySelector('#x')[_in]='';
 			_pf.querySelector('#z')[_in]='';
+			
+			_pf.querySelector('#yPsMerc')[_in]='';
+			_pf.querySelector('#xPsMerc')[_in]='';
+			_pf.querySelector('#zResPsMerc')[_in]='';
+			
 
 			if(_res.data.nuevo!=undefined){
 				//console.log(_res.data.nuevo);
@@ -691,6 +747,10 @@ if($RID>0){
 				_pf.querySelector('#y')[_in]=_res.data.nuevo.x;
 				_pf.querySelector('#x')[_in]=_res.data.nuevo.y;
 				_pf.querySelector('#z')[_in]=_res.data.nuevo.z;
+				
+				_pf.querySelector('#yPsMerc')[_in]=_res.data.nuevo.yPsMerc;
+				_pf.querySelector('#xPsMerc')[_in]=_res.data.nuevo.xPsMerc;
+				_pf.querySelector('#zResPsMerc')[_in]=_res.data.nuevo.zResPsMerc;
 			}
 
 			if(_resetear!='no'){				
@@ -714,6 +774,10 @@ if($RID>0){
 			_pf.querySelector('#y')[_in]=_res.data.punto.y;
 			_pf.querySelector('#x')[_in]=_res.data.punto.x;
 			_pf.querySelector('#z')[_in]=_res.data.punto.z;
+
+			_pf.querySelector('#yPsMerc')[_in]=_res.data.punto.yPsMerc;
+			_pf.querySelector('#xPsMerc')[_in]=_res.data.punto.xPsMerc;
+			_pf.querySelector('#zResPsMerc')[_in]=_res.data.punto.zResPsMerc;
 
 			_pf.querySelector('#textobreve')[_in]=_res.data.punto.textobreve;
 			_pf.querySelector('#valor')[_in]=_res.data.punto.valor;
@@ -744,10 +808,18 @@ if($RID>0){
 					_pf.querySelector('#bloqudescricion').style.display='block';
 					_pf.querySelector('#bloqudescricion #bAu').innerHTML=_res.data.punto.zz_bloqueadoN+" "+_res.data.punto.zz_bloqueadoA;
 					_pf.querySelector('#bloqudescricion #bTx').innerHTML=_res.data.punto.zz_bloqueadoTx;
+					_pf.querySelector('#bloqPu[modo="reinc"]').style.display='none';
+					
 				}else{
 					_pf.querySelector('#bloqudescricion').style.display='none';
+					if(_pf.querySelector('#bloqPu[modo="retir"]')!=null){
+						_pf.querySelector('#bloqPu[modo="retir"]').style.display='none';
+					}
 				}
 			}
+			
+			_pf.querySelector('#bloquIdent #autoria').innerHTML=_res.data.punto.nombre +" "+ _res.data.punto.apellido;
+			_pf.querySelector('#bloquIdent #idtx').innerHTML=_res.data.punto.id;		
 			
 			
 			if(_ac.docente=='1'){	
@@ -758,22 +830,26 @@ if($RID>0){
 				document.getElementById("bloqPu").style.display="block";
 				
 				
-				if(_ac.editor=='0'){	
+				if(_ac.editor=='0'){
 					_pf.querySelector('#formCoord').style.display='block';
 					
 					if(_res.data.punto.zz_bloqueado=='1'){
-						_pf.querySelector('#formCoord [modo="reinc"]').style.display='block';
-						_pf.querySelector('#formCoord [modo="retir"]').style.display='none';
-						_pf.querySelector('#formCoord #inputAccion').value='bloquear';					
+						document.querySelector('#bloqPu[modo="reinc"]').style.display='block';
+						document.querySelector('#bloqPu[modo="retir"]').style.display='none';
+						document.querySelector('#formCoord #inputAccion').value='bloquear';					
 					}else if(_res.data.punto.zz_bloqueado=='0'){
-						_pf.querySelector('#formCoord [modo="reinc"]').style.display='none';
-						_pf.querySelector('#formCoord [modo="retir"]').style.display='block';
-						_pf.querySelector('#formCoord #inputAccion').value='desbloquear';
+						document.querySelector('#bloqPu[modo="reinc"]').style.display='none';
+						document.querySelector('#bloqPu[modo="retir"]').style.display='block';
+						document.querySelector('#formCoord #inputAccion').value='desbloquear';
 					}
 				}
+			}else{
+				document.querySelector('#bloqPu[modo="retir"]').style.display='none';
+				document.querySelector('#bloqPu[modo="reinc"]').style.display='none';				
 			}
 			
-			
+			console.log('acceso:');
+			console.log(_ac);
 			console.log(_res.data.punto);
 			_pf.querySelector('#categoria').style.backgroundColor=_res.data.punto.categoriaCol;
 			_col = _res.data.punto.categoriaCol.replace("rgb(", "");
@@ -839,6 +915,92 @@ if($RID>0){
 			document.getElementById("mapa").contentWindow.mostrarArea(_ac);
 		}	
 	}
+	
+	var _nFile=0;
+		
+	var xhr=Array();
+	var inter=Array();
+
+	function enviarAdjunto(_this,_event){
+		
+		var files = _this.files;
+				
+		for (i = 0; i < files.length; i++) {
+	    	_nFile++;
+	    	console.log(files[i]);
+			var parametros = new FormData();
+			parametros.append('upload',files[i]);
+			parametros.append('nfile',_nFile);
+			parametros.append('actividad',_Aid);
+			
+			var _nombre=files[i].name;
+			//_upF=document.createElement('a');
+			//_upF.setAttribute('nf',_nFile);
+			//_upF.setAttribute('class',"archivo");
+			//_upF.setAttribute('size',Math.round(files[i].size/1000));
+			//_upF.innerHTML=files[i].name;
+			//document.querySelector('#listadosubiendo').appendChild(_upF);
+			
+			_nn=_nFile;
+			xhr[_nn] = new XMLHttpRequest();
+			xhr[_nn].open('POST', './agrega_adjunto.php', true);
+			//xhr[_nn].upload.li=_upF;
+			xhr[_nn].upload.addEventListener("progress", updateProgress, false);			
+			
+			xhr[_nn].onreadystatechange = function(evt){
+				//console.log(evt);
+				
+				if(evt.explicitOriginalTarget.readyState==4){
+					var _res = $.parseJSON(evt.explicitOriginalTarget.response);
+					//console.log(_res);
+					
+					//alert('terminó '+_res.data.nf);
+					
+					if(_res.res=='exito'){							
+						//_file=document.querySelector('#listadosubiendo > a[nf="'+_res.data.nf+'"]');								
+						//document.querySelector('#listadoaordenar').appendChild(_file);
+						//_file.setAttribute('href',_res.data.ruta);
+						//_file.setAttribute('download',_file.innerHTML);
+						//_file.setAttribute('draggable',"true");
+						//_file.setAttribute('ondragstart',"dragFile(event)");
+						//_file.setAttribute('idfi',_res.data.nid);
+						
+						
+						document.querySelector('#formulario[tipo="edicion"] #link').value=_res.data.nuevonombre;
+						
+						if(_res.data.tipo){
+							//console.log('hola');
+							document.querySelector('#formulario[tipo="edicion"] #linkimagen').setAttribute('src',_res.data.nuevonombre);
+							document.querySelector('#formulario[tipo="edicion"] #linkimagen').style.display='block';
+							document.querySelector('#formulario[tipo="edicion"] #linkarchivo').style.display='none';
+							document.querySelector('#formulario[tipo="edicion"] #linkweb').style.display='none';	
+						}
+						
+					}else{
+						//_file=document.querySelector('#listadosubiendo > a[nf="'+_res.data.nf+'"]');
+						//_file.innerHTML+=' ERROR';
+						//_file.style.color='red';
+						document.querySelector('#formulario[tipo="edicion"] #link').value='error';
+					}
+					//cargaTodo();
+					//limpiarcargando(_nombre);
+				
+				}
+				
+			}
+			xhr[_nn].send(parametros);
+		}			
+	}
+	
+	function updateProgress(evt) {
+	  if (evt.lengthComputable) {
+	    var percentComplete = 100 * evt.loaded / evt.total;		   
+	    console.log(Math.round(percentComplete)+"%");
+	  } else {
+	    // Unable to compute progress information since the total size is unknown
+	  }
+	  
+	}
 
 	function obtenerDescarga(_this){
 		var parametros = {
@@ -872,16 +1034,6 @@ if($RID>0){
 <script type='text/javascript'>
 	// funciones UI para mostrar y ocultar información	
 
-/*
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition);
-    } else {
-        alert("Geolocation is not supported by this browser.");
-    }
-	function showPosition(position) {
-	    	alert("Latitude: " + position.coords.latitude + " Longitude: " + position.coords.longitude);
-	}
-*/
 	function abreVentana(_this){
 		_this.parentNode.setAttribute("ventana","abierta");
 		_this.style.display="none";
@@ -898,7 +1050,14 @@ if($RID>0){
 		_this.style.color = _this.options[_this.selectedIndex].style.color;
 	}
 	
+	
 	function enviarForm(_this){
+		if(_StatusEnvio!='listo'){
+			alert('sistema ocupado, reintente en unos segundos');
+			console.log('el sistema de envió está acupado');
+			return;
+		}
+		
 		_parametros = {};		
 		_inns=_this.parentNode.querySelectorAll('input, textarea, select');
 					
@@ -929,44 +1088,42 @@ if($RID>0){
 		console.log(_parametros);
 		
 		if(_parametros.rid!=''){
+			_StatusEnvio='formulario enviado';
 			$.ajax({
 				data:  _parametros,
 				url:   'punto_guardar.php',
 				type:  'post',
 				success:  function (response){
+					_StatusEnvio='listo';
 					var _res = $.parseJSON(response);
 					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					}
 					if(_res.res=='exito'){
 						reiniciar();
 					}else{
-						if(_res.mg.length==0){
-							alert('error, vuelva a intentarlo');
-						}else{
-							for(_nm in _res.mg){
-								alert(_res.mg[_nm]);
-							}
-						}						
+						alert('error, vuelva a intentarlo');						
 					}
 				}
 			});
 		}else if(_parametros.rid==''){
+			_StatusEnvio='formulario enviado';
 			$.ajax({
 				data:  _parametros,
 				url:   'punto_crear.php',
 				type:  'post',
 				success:  function (response){
+					_StatusEnvio='listo';
 					var _res = $.parseJSON(response);
 					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					}
 					if(_res.res=='exito'){
 						reiniciar();
 					}else{
-						if(_res.mg.length==0){
-							alert('error, vuelva a intentarlo');
-						}else{
-							for(_nm in _res.mg){
-								alert(_res.mg[_nm]);
-							}
-						}						
+						alert('error, vuelva a intentarlo');						
 					}
 				}
 			});			
@@ -974,7 +1131,11 @@ if($RID>0){
 	}
 	
 	function borrarPunto(_this){
-		
+		if(_StatusEnvio!='listo'){
+			alert('sistema ocupado, reintente en unos segundos');
+			console.log('el sistema de envió está acupado');
+			return;
+		}
 		if(confirm('¿Querés borrar el punto? (no se pùede deshacer)')){
 			
 			_parametros = {};	
@@ -983,24 +1144,22 @@ if($RID>0){
 			_parametros.uid=_Uid;
 			
 			console.log(_parametros);
-			
+			_StatusEnvio='formulario enviado';
 			$.ajax({
 				data:  _parametros,
 				url:   'punto_borrar.php',
 				type:  'post',
 				success:  function (response){
+					_StatusEnvio='listo';
 					var _res = $.parseJSON(response);
 					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					}
 					if(_res.res=='exito'){
 						reiniciar();
 					}else{
-						if(_res.mg.length==0){
-							alert('error, vuelva a intentarlo');
-						}else{
-							for(_nm in _res.mg){
-								alert(_res.mg[_nm]);
-							}
-						}						
+						alert('error, vuelva a intentarlo');						
 					}
 				}
 			});
@@ -1009,7 +1168,11 @@ if($RID>0){
 
 	
 	function desbloquearPunto(_this){
-		
+		if(_StatusEnvio!='listo'){
+			alert('sistema ocupado, reintente en unos segundos');
+			console.log('el sistema de envió está acupado');
+			return;
+		}
 		if(confirm('¿Querés reincorporar este punto al conjunto visible? (se perderán los datos del bloqueo actual)')){
 			
 			_parametros = {};	
@@ -1018,24 +1181,22 @@ if($RID>0){
 			_parametros.uid=_Uid;
 			
 			console.log(_parametros);
-			
+			_StatusEnvio='formulario enviado';
 			$.ajax({
 				data:  _parametros,
 				url:   'punto_desbloquear.php',
 				type:  'post',
 				success:  function (response){
+					_StatusEnvio='listo';
 					var _res = $.parseJSON(response);
 					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					}
 					if(_res.res=='exito'){
 						reiniciar();
 					}else{
-						if(_res.mg.length==0){
-							alert('error, vuelva a intentarlo');
-						}else{
-							for(_nm in _res.mg){
-								alert(_res.mg[_nm]);
-							}
-						}						
+						alert(_res.mg[_nm]);			
 					}
 				}
 			});
@@ -1043,7 +1204,11 @@ if($RID>0){
 	}		
 			
 	function bloquearPunto(_this){
-		
+		if(_StatusEnvio!='listo'){
+			alert('sistema ocupado, reintente en unos segundos');
+			console.log('el sistema de envió está acupado');
+			return;
+		}
 		_bTx=_this.parentNode.querySelector('#bloqTx').value;
 		if(_bTx==''){
 			alert('cualquier bloqueo debe ser acompañado de un mensaje justificatorio');
@@ -1059,24 +1224,22 @@ if($RID>0){
 			_parametros.zz_bloqueadoTx=_bTx;
 			
 			console.log(_parametros);
-			
+			_StatusEnvio='formulario enviado';
 			$.ajax({
 				data:  _parametros,
 				url:   'punto_bloquear.php',
 				type:  'post',
 				success:  function (response){
+					_StatusEnvio='listo';
 					var _res = $.parseJSON(response);
 					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					}
 					if(_res.res=='exito'){
 						reiniciar();
 					}else{
-						if(_res.mg.length==0){
-							alert('error, vuelva a intentarlo');
-						}else{
-							for(_nm in _res.mg){
-								alert(_res.mg[_nm]);
-							}
-						}						
+							alert('error, vuelva a intentarlo');			
 					}
 				}
 			});
@@ -1117,6 +1280,8 @@ if($RID>0){
 
 
 <?php
-include('./includes/pie.php');
+
+include('./_serverconfig/pie.php');
 ?>
 </body>
+

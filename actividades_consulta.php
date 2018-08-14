@@ -37,8 +37,8 @@
 * @return array Retorna el listado de actividades, sus imágenes y sus localizaciónes
 */
 function actividadesconsulta($ID,$seleccion){
-
-	global $UsuarioI, $PanelI, $FILTRO, $Freportedesde, $Freportehasta, $FILTROFECHAD, $FILTROFECHAH, $config, $Conec1;
+	
+	global $CU, $UsuarioI, $PanelI, $FILTRO, $Freportedesde, $Freportehasta, $FILTROFECHAD, $FILTROFECHAH, $config, $Conec1;
 	
 	if(!isset($Freportedesde)){$Freportedesde = '9999-12-30';}
 /*medicion de rendimiento lamp*/
@@ -56,7 +56,7 @@ function actividadesconsulta($ID,$seleccion){
 		    `ACTcategorias`.`orden`,
 		    `ACTcategorias`.`zz_fusionadaa`,
 		    CO_color
-		FROM `UNmapa`.`ACTcategorias`
+		FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
 		WHERE
 			1=1
 			$andid
@@ -64,10 +64,13 @@ function actividadesconsulta($ID,$seleccion){
 		ORDER BY 
 			`ACTcategorias`.`orden` ASC
 	";
-	$ConsultaACTclases = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);	
+
+	$ConsultaACTclases  = $Conec1->query($query);
+	echo  $Conec1->error;	
+	//echo $_SESSION['Unmapa']->DATABASE_NAME;
+	//print_r($_SESSION);
 	//echo $query;
-	while($fila=mysql_fetch_assoc($ConsultaACTclases)){
+	while($fila=$ConsultaACTclases->fetch_assoc()){
 		$ActCat[$fila['id_p_actividades_id']][$fila['id']]=$fila;
 		
 		if($fila['zz_fusionadaa']>0){
@@ -78,20 +81,27 @@ function actividadesconsulta($ID,$seleccion){
 		
 		$CatConversor[$fila['id']]=$dest;
 	}
+ 	$ConsultaACTclases->close();
 	//print_r($ActCat);	
 	//echo "<pre>";print_r($CatConversor);echo "</pre>";
 	
 	// consulta la clasificación de roles según sistema
-	$query="SELECT 
+	$query="
+	SELECT 
 		`SISroles`.`id`,
 	    `SISroles`.`nombre`,
 	    `SISroles`.`descripción`
-	FROM `UNmapa`.`SISroles`;
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`SISroles`;
 	";
-	$ConsultaSISroles = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);	
+	$ConsultaSISroles = $Conec1->query($query);
+	if($Conec1->error!=''){
+		echo "error en la consulta:".$Conec1->error.PHP_EOL;
+		echo $query;
+	}
+			
 	//echo $query;
-	while($row=mysql_fetch_assoc($ConsultaSISroles)){
+	while($row = $ConsultaSISroles->fetch_assoc()){
 		$Roles[$row['id']]=$row;
 	}	
 	
@@ -104,16 +114,18 @@ function actividadesconsulta($ID,$seleccion){
 		    `ACTaccesos`.`id_usuarios`,
 		    `ACTaccesos`.`nivel`,
 		    `ACTaccesos`.`autorizado`
-		FROM `UNmapa`.`ACTaccesos`
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
 		WHERE
 			1=1
 			$andid
 
 	";
-	$ConsultaACTaccesos = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);	
+	
+	$ConsultaACTaccesos = $Conec1->query($query);
+	echo $Conec1->error;
 	//echo $query;
-	while($fila=mysql_fetch_assoc($ConsultaACTaccesos)){
+	while($fila= $ConsultaACTaccesos->fetch_assoc()){
 		
 		$ActAcc[$fila['id_actividades']]['Acc'][$fila['nivel']][$fila['id']]=$fila;
 		
@@ -171,12 +183,23 @@ function actividadesconsulta($ID,$seleccion){
 		    `actividades`.`zz_PUBLICO`,
 		    usuarios.nombre as Unombre,
 		    usuarios.apellido as Uapellido,
-		    (select count(1) from `geodatos` WHERE `geodatos`.id_actividades = `actividades`.id and `geodatos`.zz_borrada='0') cantidadPuntos
+		    (select 
+	    		count(1) 
+	    		from 
+		    		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`,
+		    		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`atributos`
+		    	WHERE 
+		    	
+		    		`geodatos`.id_actividades = `actividades`.id and `geodatos`.zz_borrada='0'
+		    		AND 
+		    		`geodatos`.id=`atributos`.id
+		    ) cantidadPuntos
 		    
-		FROM `UNmapa`.`actividades`	
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`	
 		
 		LEFT JOIN 
-			usuarios
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.usuarios
 			ON usuarios.id = actividades.zz_AUTOUSUARIOCREAC
 		
 		WHERE
@@ -192,8 +215,9 @@ function actividadesconsulta($ID,$seleccion){
 			`actividades`.`zz_AUTOFECHACREACION` DESC
 	
 	";	
-	$ConsultaACT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	
+	$ConsultaACT  = $Conec1->query($query);
+	echo $Conec1->error;
 	
 	$query="
 	SELECT `usuarios`.`id`,
@@ -206,37 +230,49 @@ function actividadesconsulta($ID,$seleccion){
 	    `usuarios`.`mail`,
 	    `usuarios`.`telefono`,
 	    `usuarios`.`log`
-	FROM `UNmapa`.`usuarios`
+	FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
 	";	
-	$ConsultaUsu = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$ConsultaUsu = $Conec1->query($query);
+	echo $Conec1->error;	
 	
-	while($fila=mysql_fetch_assoc($ConsultaUsu)){
+	while($fila=$ConsultaUsu->fetch_assoc()){
 		$Usuarios[$fila['id']]=$fila;		
 	}
-		
+	
+	if(!isset($ActAcc)){$ActAcc=array();}
 	foreach($ActAcc as $Kact => $Vact){
 		foreach($Vact['Acc'] as $kacN => $vacN){
 			foreach($vacN as $kacc => $vacc){
-				$ActAcc[$Kact]['Acc'][$kacN][$kacc]['usuario']=$Usuarios[$vacc['id_usuarios']];			
+				if(isset($Usuarios[$vacc['id_usuarios']])){
+					$ActAcc[$Kact]['Acc'][$kacN][$kacc]['usuario']=$Usuarios[$vacc['id_usuarios']];
+				}			
 			}
 		}
 	}	
 
 				
 	foreach($ActAcc as $Kact => $Vact){
-		foreach($Vact['acc']['participantes'] as $kacc => $vacc){
-			$ActAcc[$Kact]['acc']['participantes'][$kacc]['usuario']=$Usuarios[$vacc['id_usuarios']];			
-		}
-		foreach($Vact['acc']['editores'] as $kacc => $vacc){
-			$ActAcc[$Kact]['acc']['editores'][$kacc]['usuario']=$Usuarios[$vacc['id_usuarios']];			
+		if(isset($Vact['acc'])){
+			foreach($Vact['acc']['participantes'] as $kacc => $vacc){
+				if(isset($Usuarios[$vacc['id_usuarios']])){
+					$ActAcc[$Kact]['acc']['participantes'][$kacc]['usuario']=$Usuarios[$vacc['id_usuarios']];
+				}		
+			}
+			if(isset($Vact['acc']['editores'])){
+				foreach($Vact['acc']['editores'] as $kacc => $vacc){
+					
+					$ActAcc[$Kact]['acc']['editores'][$kacc]['usuario']=$Usuarios[$vacc['id_usuarios']];			
+				}
+			}
 		}
 	}	
 		
-	echo mysql_error($Conec1);
-	while($fila=mysql_fetch_assoc($ConsultaACT)){
+	echo $Conec1->error;	
+	
+	while($fila=$ConsultaACT->fetch_assoc()){
 		
 		$cat['ACTcategorias']=array();
+		if(!isset($ActCat[$fila['id']])){$ActCat[$fila['id']]=array();}
 		$cat['ACTcategorias']=$ActCat[$fila['id']];
 		
 		$ACT[$fila['id']]=$fila;
@@ -246,13 +282,17 @@ function actividadesconsulta($ID,$seleccion){
 		
 		$ACT[$fila['id']]=array_merge($a[0],$cat,$a[1]);	
 		
-		$ACT[$fila['id']]['acc']=$ActAcc[$fila['id']]['acc'];
+		if(isset($ActAcc[$fila['id']])&&isset($ACT[$fila['id']]['acc'])){
+			$ACT[$fila['id']]['acc']=$ActAcc[$fila['id']]['acc'];
+		}
 		$ACT[$fila['id']]['acc']['editores']['n']['id']='n';
 		$ACT[$fila['id']]['acc']['editores']['n']['id_actividades']=$ID;
 		$ACT[$fila['id']]['acc']['editores']['n']['id_usuarios']=$fila['zz_AUTOUSUARIOCREAC'];
 		$ACT[$fila['id']]['acc']['editores']['n']['usuario']=$Usuarios[$fila['zz_AUTOUSUARIOCREAC']];	
 		
+		if(isset($ActAcc[$fila['id']])){
 		$ACT[$fila['id']]['Acc']=$ActAcc[$fila['id']]['Acc'];
+		}
 		$ACT[$fila['id']]['Acc']['3']['n']['id']='n';
 		$ACT[$fila['id']]['Acc']['3']['n']['id_actividades']=$ID;
 		$ACT[$fila['id']]['Acc']['3']['n']['id_usuarios']=$fila['zz_AUTOUSUARIOCREAC'];
@@ -278,17 +318,18 @@ function actividadesconsulta($ID,$seleccion){
 		    `atributos`.`escala`,
 		    `atributos`.`nivelUsuario`,
 		    `atributos`.`areaUsuario`
-		FROM `UNmapa`.`atributos`
+		FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`atributos`
 		LEFT JOIN geodatos
 		ON geodatos.id=atributos.id
 		WHERE
 		geodatos.zz_borrada='0'
 		;
 	";
-	$ConsultaATT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$ConsultaATT =$Conec1->query($query);
+	echo $Conec1->error;	
 	
-	while($fila=mysql_fetch_assoc($ConsultaATT)){
+	while($fila=$ConsultaATT->fetch_assoc()){
+		if(!isset($CatConversor[$fila['categoria']])){$CatConversor[$fila['categoria']]='';}
 		$cat=$CatConversor[$fila['categoria']];
 		$ATT[$fila['id']]=$fila;
 		$ATT[$fila['id']]['categoria']=$cat;
@@ -313,25 +354,32 @@ function actividadesconsulta($ID,$seleccion){
 	    `geodatos`.`id_actividades`,
 	    `geodatos`.`fecha`
 		
-	FROM `UNmapa`.`geodatos`
-	where zz_borrada='0'
-	and id_usuarios>0
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`
+	where 
+		zz_borrada='0'
+		AND
+		id_usuarios>0
 	";
 	
 	
-	$ConsultaGEO = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$ConsultaGEO = $Conec1->query($query);
+	echo $Conec1->error;
 	if ($ConsultaGEO != null) {
-		while($fila=mysql_fetch_assoc($ConsultaGEO)){
+		while($fila=$ConsultaGEO->fetch_assoc()){
 			if(isset($ACT[$fila['id_actividades']])){
 				if(!isset($ATT[$fila['id']])){continue;}
 				$f=array_merge($fila,$ATT[$fila['id']]);
 				$ACT[$fila['id_actividades']]['GEO'][$fila['id']]=$f;
-				$ACT[$fila['id_actividades']]['GEO'][$fila['id']]['Usuario']=$Usuarios[$fila['id_usuarios']];								
-				$ACT[$fila['id_actividades']]['GEO'][$fila['id']]['categoriaTx']=$ActCat[$fila['id_actividades']][$ATT[$fila['id']]['categoria']]['nombre'];
-				$ACT[$fila['id_actividades']]['GEO'][$fila['id']]['categoriaDes']=$ActCat[$fila['id_actividades']][$ATT[$fila['id']]['categoria']]['descripcion'];
-				$ACT[$fila['id_actividades']]['GEO'][$fila['id']]['categoriaCo']=$ActCat[$fila['id_actividades']][$ATT[$fila['id']]['categoria']]['CO_color'];
-
+				$ACT[$fila['id_actividades']]['GEO'][$fila['id']]['Usuario']=$Usuarios[$fila['id_usuarios']];			
+				if(isset($ActCat[$fila['id_actividades']][$ATT[$fila['id']]['categoria']])){			
+					$ACT[$fila['id_actividades']]['GEO'][$fila['id']]['categoriaTx']=$ActCat[$fila['id_actividades']][$ATT[$fila['id']]['categoria']]['nombre'];
+					$ACT[$fila['id_actividades']]['GEO'][$fila['id']]['categoriaDes']=$ActCat[$fila['id_actividades']][$ATT[$fila['id']]['categoria']]['descripcion'];
+					$ACT[$fila['id_actividades']]['GEO'][$fila['id']]['categoriaCo']=$ActCat[$fila['id_actividades']][$ATT[$fila['id']]['categoria']]['CO_color'];
+				}
+				if(!isset($ACT[$fila['id_actividades']]['categoriaspuntos'][$ATT[$fila['id']]['categoria']])){
+					$ACT[$fila['id_actividades']]['categoriaspuntos'][$ATT[$fila['id']]['categoria']]=0;
+				}
 				$ACT[$fila['id_actividades']]['categoriaspuntos'][$ATT[$fila['id']]['categoria']]++;
 			}		
 		}	
@@ -350,7 +398,7 @@ function actividadesconsulta($ID,$seleccion){
 * @return string Retorna el listado en formato html
 */
 function actividadeslistado($ID,$seleccion){
-	global $UsuarioI, $PanelI, $FILTRO, $Freportedesde, $Freportehasta, $FILTROFECHAD, $FILTROFECHAH, $config,$HOY;
+	global $CU, $UsuarioI, $PanelI, $FILTRO, $Freportedesde, $Freportehasta, $FILTROFECHAD, $FILTROFECHAH, $config,$HOY;
 	
 	/* consulta array de argumentaicónes */
 	$actividades = 	actividadesconsulta($ID,$seleccion);
@@ -420,11 +468,11 @@ function actividadeslistado($ID,$seleccion){
 			}
 		}
 		
-			
+			if(!isset($tit)){$tit='';}
 		$fila.= "<div estado='".$estado."' title='".$tit."' class='dato resultado'>$tx</div>";
 		
 		
-		$fila.=$datoloc;
+		//$fila.=$datoloc;
 		$fila.=	"</div>";
 					
 
@@ -448,7 +496,7 @@ function actividadeslistado($ID,$seleccion){
 * @return string Retorna el listado en formato array
 */
 function usuariosconsulta($ID){
-	global $UsuarioI, $Conec1;
+	global $CU, $UsuarioI, $Conec1;
 	
 		$query="
 	SELECT `usuarios`.`id`,
@@ -461,12 +509,13 @@ function usuariosconsulta($ID){
 	    `usuarios`.`mail`,
 	    `usuarios`.`telefono`,
 	    `usuarios`.`log`
-	FROM `UNmapa`.`usuarios`
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
 	";	
-	$ConsultaUsu = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$ConsultaUsu = $Conec1->query($query);
+	echo $Conec1->error;
 	
-	while($fila=mysql_fetch_assoc($ConsultaUsu)){
+	while($fila=$ConsultaUsu->fetch_assoc()){
 		$Usuarios[$fila['id']]=$fila;		
 	}
 	

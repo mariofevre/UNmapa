@@ -39,7 +39,7 @@ include('./includes/conexionusuario.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){
 	$e=explode('/',__FILE__);
 	$f=$e[(count($e)-1)];
@@ -73,7 +73,7 @@ if(isset($_POST['actividad'])){
 if($Actividad==''){
 	header('location: ./actividades.php');	//si no hay una actividad definida esta página no debería consultarse
 	echo "ERROR de Acceso 1";
-	break;
+	exit;
 }
 
 
@@ -107,7 +107,7 @@ $Actividad=reset(actividadesconsulta($ID,$seleccion));
 //echo "<pre>";print_r($Actividad);echo "</pre>";
 if($Actividad['zz_PUBLICO']!='1'&&$Actividad['zz_AUTOUSUARIOCREAC']!=$UsuarioI){
 	echo "<h2>Error en el acceso, esta actividad no se encuentra aún publicada y usted no se encuentra registrado como autor de la misma.</h2>";
-	break;
+	exit;
 }
 
 
@@ -477,7 +477,7 @@ span.ui-slider-handle:hover {
 	
 	@media print {	
 			
-	   div.registro{page-break-inside: avoid;}
+	   div.registro{page-exit-inside: avoid;}
 	   body{
 	   	background-color:#fff;
 	   	background-image:none;
@@ -572,11 +572,6 @@ span.ui-slider-handle:hover {
 </script>
 
 <?php
-include('./includes/pie.php');
-	/*medicion de rendimiento lamp*/
-	$endtime = microtime(true);
-	$duration = $endtime - $starttime;
-	$duration = substr($duration,0,6);
-	echo "<br>tiempo de respuesta : " .$duration. " segundos";
+include('./_serverconfig/pie.php');
 ?>
 </body>

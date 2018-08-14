@@ -1,4 +1,5 @@
 <?php
+// eliminar esta funcion solo se utiliza para borrar categorías, pero es muy insegura
 /**
 * borra.php
 *
@@ -29,17 +30,17 @@
 
 
 
-/* verificación de seguridad */
+// verificación de seguridad 
 include('./includes/conexion.php');
 include('./includes/conexionusuario.php');
 
-/* funciones frecuentes */
+// funciones frecuentes 
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
-
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
+
 
 
 $Id = $_POST['id'];
@@ -59,20 +60,24 @@ foreach($_POST as $k => $v){// estas variables son pasadas por als aplicaciones 
 	}
 }
 
-$query="SELECT * FROM $Tabla WHERE id = $Id";
-$Consulta = mysql_query($query,$Conec1);
-$_SESSION['DEBUG']['mensajes'][]=$query . " : ". mysql_numrows($Consulta) ;
-$_SESSION['DEBUG']['mensajes'][]=mysql_error($Conec1);
+$query="SELECT * FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$Tabla WHERE id = $Id";
+//echo $query;
+$Consulta = $Conec1->query($query);
 
-$query="SHOW COLUMNS FROM $Tabla";
-$campos = mysql_query($query,$Conec1);
-$_SESSION['DEBUG']['mensajes'][]=mysql_error($Conec1);
+$Log['tx'][]=$query . " : ". $Consulta->num_rows;
+$Log['tx'][]=$Conec1->error;
+
+$query="SHOW COLUMNS FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$Tabla";
+$result = $Conec1->query($query);
+$row= $Consulta->fetch_assoc();
+
+$Log['tx'][]=$Conec1->error;
 	
-$accion = "DELETE FROM $Tabla "; //por defecto elimina el registro, excepto que la tabla presente campos de papelera
+$accion = "DELETE FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$Tabla "; //por defecto elimina el registro, excepto que la tabla presente campos de papelera
 
 $sets = "SET ";
 
-while($row=mysql_fetch_assoc($campos)){
+while($row=$result->fetch_assoc()){
 	
 	if(substr($row['Field'],0,17)=='zz_borradausuario'){
 		$sets .= $row['Field']."='$UsuarioI', ";
@@ -101,13 +106,12 @@ if($sets=="SET "){$sets='';}else{$sets=substr($sets,0,-2);}
 
 $query="$accion $sets WHERE id='$Id'";
 
-
 if($Accion == "borra"){
-	$Consulta_contrato = mysql_query($query,$Conec1);
-	$_SESSION['DEBUG']['mensajes'][]=$query;		
-	$_SESSION['DEBUG']['mensajes'][]=mysql_error($Conec1);
+	$Consulta_contrato = $Conec1->query($query);
+	$Log['tx'][]=$query;		
+	$Log['tx'][]=$Conec1->error;
 }else{
-	$_SESSION['DEBUG']['mensajes'][]="esta acción no fue llamada correctamente, borra.php solo se activa enviando via POST la 'accion' 'borra'";
+	$Log['tx'][]="esta acción no fue llamada correctamente, borra.php solo se activa enviando via POST la 'accion' 'borra'";
 }
 
 
@@ -127,6 +131,7 @@ foreach($PASAR as $k => $v){
 }
 
 $_SESSION['DEBUG']['mensajes'][]=$errorsalida;
+
 
 if($Salida!=''){
 	?>

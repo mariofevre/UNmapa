@@ -45,22 +45,22 @@ if(isset($gets['user'])) {
 		SELECT 
 			* 
 		FROM 
-			`usuarios` 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios` 
 		WHERE zz_idactivacion = '".$gets['user']."'
 	";
-	$resultado = mysql_query($query,$Conec1) or die (mysql_error()); 
-	if(mysql_num_rows($resultado == 0)){ 
+	$Consulta = $Conec1->query($query);
+	if($Consulta->num_rows == 0){ 
 	$mensage = "Disculpe, no existe la cuenta, el codigo de activacion es invalido, o la cuenta ya fue activada.";
 	}else{
 	$query = "
 		UPDATE
-			`usuarios` 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios` 
 		SET
 			zz_activo='1'	
 		WHERE 
 			zz_idactivacion='".$gets['user']."'
 	";		
-	$resultado = mysql_query($query,$Conec1) or die(mysql_error());
+	$Consulta = $Conec1->query($query);
 	$mensage = "
 		Gracias. Su cuenta ha sido activada.
 		<p>Para continuar hacia su cuenta puede <a href='login.php'>presionar aqui</a>.</p>

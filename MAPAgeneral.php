@@ -37,13 +37,13 @@ include("./includes/cadenas.php");
 
 //include("./includes/BASEconsultas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
 $FILTRO=isset($_GET['filtro'])?$_GET['filtro']:'';
 
 //$MODO = $_GET['modo'];
-
+if(!isset($ActividadId)){$ActividadId='';}
 $HOY=date("Y-m-d");
 ?>
 <head>

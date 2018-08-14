@@ -42,12 +42,12 @@ $Log['res']='';
 
 function terminar($Log){
 	$res=json_encode($Log);
-	if($res==''){$res=print_r($Log,true);}
+	if($res==''){$res="Error en la codificacion de caracteres ".print_r($Log,true);}
 	echo $res;
 	exit;
 }
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
 $HOY=date("Y-m-d");
@@ -61,6 +61,7 @@ if(!isset($_GET['aid'])){
 $ID=$_GET['aid'];
 
 //echo json_encode($Res);
+$Res['features']=array();
 
 $query="	
 	SELECT 
@@ -70,23 +71,23 @@ $query="
 	    `ACTaccesos`.`nivel`,
 	    `ACTaccesos`.`autorizado`
 	FROM 
-		`UNmapa`.`ACTaccesos`
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
 	WHERE
 		id_actividades='".$ID."'
 		AND
 		id_usuarios='".$UsuarioI."'
 ";
-$Consulta = mysql_query($query,$Conec1);
+$Consulta = $Conec1->query($query);
 
-if(mysql_error($Conec1)!=''){
-	$Log['tx'][]=mysql_error($Conec1);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= $query;
 	$Log['tx'][]= 'error al consultar base';
 	terminar($log);
 }
 
 $Act['docente']='0';
-while($fila=mysql_fetch_assoc($Consulta)){
+while($fila= $Consulta->fetch_assoc()){
 	$Log['tx'][]=$fila['nivel'];
 	$Log['tx'][]=$Actividad['zz_AUTOUSUARIOCREAC'];
 	$Log['tx'][]=$UsuarioI;
@@ -137,16 +138,23 @@ $query="
 	    `actividades`.`zz_borrada`,
 	    `actividades`.`zz_AUTOFECHACREACION`,
 	    `actividades`.`zz_PUBLICO`
-	FROM `UNmapa`.`actividades`
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`
 	WHERE
-	id='".$ID."'		
+		id='".$ID."'		
 	
 ";
-$Consulta = mysql_query($query,$Conec1);
-echo mysql_error($Conec1);	
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
+	$Log['tx'][]= $query;
+	$Log['tx'][]= 'error al consultar base';
+	terminar($log);
+}
+	
 	
 	//echo $query;
-	while($fila=mysql_fetch_assoc($Consulta)){
+	while($fila=$Consulta->fetch_assoc()){
 		if($fila['zz_AUTOUSUARIOCREAC']==$UsuarioI){
 			$Act['docente']='1';
 		}
@@ -162,13 +170,20 @@ echo mysql_error($Conec1);
 			`usuarios`.`id`,
 		    `usuarios`.`nombre`,
 		    `usuarios`.`apellido`
-		FROM `UNmapa`.`usuarios`
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
 	";
 	
-	$ConsultaU = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);	
+	$ConsultaU = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]= $query;
+		$Log['tx'][]= 'error al consultar base';
+		terminar($log);
+	}
+	
 	//echo $query;
-	while($fila=mysql_fetch_assoc($ConsultaU)){
+	while($fila=$ConsultaU->fetch_assoc()){
 		$Usu[$fila['id']]=$fila;
 	}
 
@@ -181,16 +196,23 @@ echo mysql_error($Conec1);
 		    `ACTcategorias`.`orden`,
 		    `ACTcategorias`.`zz_fusionadaa`,
 		    CO_color
-		FROM `UNmapa`.`ACTcategorias`
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
 		WHERE
 			id_p_actividades_id='".$ID."'		
 		ORDER BY 
 			`ACTcategorias`.`orden` ASC
 	";
-	$ConsultaACTclases = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);	
+	$ConsultaACTclases = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]= $query;
+		$Log['tx'][]= 'error al consultar base';
+		terminar($log);
+	}
+	
 	//echo $query;
-	while($fila=mysql_fetch_assoc($ConsultaACTclases)){
+	while($fila=$ConsultaACTclases->fetch_assoc()){
 		$ActCat[$fila['id_p_actividades_id']][$fila['id']]=$fila;
 		// cambia de categoría aquellos puntos dentro de categorías que fueron colapsadas
 		if($fila['zz_fusionadaa']>0){
@@ -214,15 +236,22 @@ echo mysql_error($Conec1);
 		    `atributos`.`escala`,
 		    `atributos`.`nivelUsuario`,
 		    `atributos`.`areaUsuario`
-		FROM `UNmapa`.`atributos`
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`atributos`
 		WHERE
-		id_actividades='".$ID."'
+			id_actividades='".$ID."'
 	";
 	
-	$ConsultaATT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
+	$ConsultaATT = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]= $query;
+		$Log['tx'][]= 'error al consultar base';
+		terminar($log);
+	}
 
-	while($fila=mysql_fetch_assoc($ConsultaATT)){
+
+	while($fila=$ConsultaATT->fetch_assoc()){
 		
 		// cambia de categoría aquellos puntos dentro de categorías que fueron colapsadas
 		if(!isset($CatConversor[$fila['categoria']])){$CatConversor[$fila['categoria']]='SD';}
@@ -230,8 +259,14 @@ echo mysql_error($Conec1);
 		
 		$f=$fila;
 		$f['categoria']=$cat;
-		$f['categoriaNom']=$ActCat[$ID][$cat]['nombre'];
-		$f['categoriaDes']=$ActCat[$ID][$cat]['descripcion'];
+		
+		if(isset($ActCat[$ID][$cat])){
+			$f['categoriaNom']=$ActCat[$ID][$cat]['nombre'];
+			$f['categoriaDes']=$ActCat[$ID][$cat]['descripcion'];
+		}else{
+			$f['categoriaNom']='';
+			$f['categoriaDes']='';
+		}
 		
 		$ATT[$fila['id']]=$f;
 	}
@@ -253,20 +288,31 @@ echo mysql_error($Conec1);
 		    `geodatos`.`geometria`,
 		    `geodatos`.`id_usuarios`,
 		    `geodatos`.`id_actividades`,
-		    `geodatos`.`fecha`
+		    `geodatos`.`fecha`,
+		    `geodatos`.`xPsMerc`,
+		    `geodatos`.`yPsMerc`,
+		    `geodatos`.`zResPsMerc`
 			
-		FROM `UNmapa`.`geodatos`
-		where 
-		zz_borrada='0'
-		and 
-		id_usuarios>0
-		AND id_actividades='".$ID."'
+			
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`
+		WHERE
+			zz_borrada='0'
+		AND 
+			id_usuarios>0
+		AND 
+			id_actividades='".$ID."'
 	";	
 	
-	$ConsultaACT = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
-		
-	while($fila=mysql_fetch_assoc($ConsultaACT)){
+	$ConsultaACT = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]= $query;
+		$Log['tx'][]= 'error al consultar base';
+		terminar($log);
+	}
+
+	while($fila= $ConsultaACT->fetch_assoc()){
 		
 		if(
 			$fila['x']>180
@@ -286,11 +332,78 @@ echo mysql_error($Conec1);
 		$f['geometry']['coordinates'][]=floatval($fila['y']);
 		
 		
+		
+		
+		
 		$f['properties']=$Act;
 		foreach($ATT[$fila['id']] as $k => $v){
 			$f['properties'][$k]=utf8_encode($v);
 		}
 
+		//echo $ATT[$fila['id']]['link'].PHP_EOL;
+		//echo substr($ATT[$fila['id']]['link'],0,2).PHP_EOL;
+		//$f['properties']['linkloc']=substr($ATT[$fila['id']]['link'],0,2);
+		//echo substr($ATT[$fila['id']]['link'],0,2).PHP_EOL;
+		if(substr($ATT[$fila['id']]['link'],0,2)=='./'){
+			
+			$f['properties']['linkloc']='remoto';
+			$p=strrpos($ATT[$fila['id']]['link'],'.');
+			$e = explode(".",$ATT[$fila['id']]['link']);
+			$e = strtolower(end($e));
+				
+			
+
+			//echo "ingresando: $nombre".PHP_EOL;
+			//se trata de un documento local
+			$f['properties']['linkloc']='local';
+			$imgtVal['jpg']='1';
+			$imgtVal['png']='1';
+			$imgtVal['tif']='1';
+			$imgtVal['bmp']='1';
+			$imgtVal['gif']='1';
+
+			
+			
+			if(!file_exists($ATT[$fila['id']]['link'])){
+				
+				$f['properties']['linkloc']=utf8_encode('perdido'.$ATT[$fila['id']]['link']);
+				
+			}elseif(isset($imgtVal[strtolower($e)])){
+				// se trata de una imagen
+				
+				$ident='_th';
+				$nn=substr($ATT[$fila['id']]['link'], 0, $p).$ident.'.'.$e;
+				
+				if(!file_exists($nn)){
+					
+					$i = getimagesize($ATT[$fila['id']]['link']);
+					$f['properties']['linkloc2']=$i;
+					$ladomayor=100;
+					if($i[0]>$ladomayor*1.3&&$i[1]>$ladomayor*1.3){
+						escalarImagen($ATT[$fila['id']]['link'], $ladomayor, $ident);
+						$f['properties']['linkth']=$nn;
+					}else{
+						$f['properties']['linkth']=$ATT[$fila['id']]['link'];
+					}
+				}else{
+					$f['properties']['linkth']=$nn;
+					
+				}
+				
+				$ident='_th';
+				$nn=substr($ATT[$fila['id']]['link'], 0, $p).$ident.'.'.$e;
+				
+				if(!file_exists($nn)){
+					$i = getimagesize($nn);
+					$ladomayor=1000;
+					if($i[0]>$ladomayor*1.3&&$i[1]>$ladomayor*1.3){
+						escalarImagen($ATT[$fila['id']]['link'], $ladomayor, $ident);
+					}
+				}
+			}
+		}elseif(substr($ATT[$fila['id']]['link'],0,5)=='http:'){
+			$f['properties']['linkloc']='remoto';
+		}
 			
 		foreach($fila as $k => $v){
 			$f['properties'][$k]=utf8_encode($v);
@@ -301,7 +414,8 @@ echo mysql_error($Conec1);
 		}else{			
 			$f['properties']['style']["color"]="rgb(80,120,250)";
 		}
-		
+
+		    
 		$f['properties']['style']['fill']='red';
 		$f['properties']['style']['stroke-width']='3';
 		$f['properties']['style']['fill-opacity']=0.6;
@@ -317,6 +431,45 @@ echo mysql_error($Conec1);
 	}
 
 	terminar($Res);
+
+
+										
+function escalarImagen($localizacion, $ladomayor, $ident) {
+
+	$filterType=imagick::FILTER_CUBIC;
+	$blur=1;
+	$bestFit=0;
+	$cropZoom=0;
+	
+	$p=strrpos($localizacion,'.');
+	
+	$e = explode(".",$localizacion);
+	$e = end($e);
+	
+	$nn=substr($localizacion, 0, $p).$ident.'.'.$e;
+	
+	copy($localizacion, $nn);
+	chmod($rut,0777);
+	if($nn==''){return;}				
+    $imagick = new \Imagick(realpath($nn));
+	
+	$ancho = $imagick->getImageWidth();
+	$alto = $imagick->getImageHeight();	
+	if($ancho>($ladomayor*1.3)||$alto>($ladomayor*1.3)){
+		if($ancho>$alto){			
+			$e=$ladomayor/$ancho;
+		}else{
+			$e=$ladomayor/$alto;
+		}
+		$nalto=round($alto*$e);		
+		$nancho=round($ancho*$e);
+
+	    $imagick->resizeImage($nancho, $nalto, $filterType, $blur, $bestFit);
+	    $imagick->writeImage ($nn);
+		chmod($nn,0777);
+		$Log['tx'][] ="archivo resamplead e:$e ($ancho x $alto > $nancho x $nalto)";
+	}
+}
 
 
 ?>

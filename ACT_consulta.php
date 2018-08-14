@@ -48,7 +48,7 @@ function terminar($Log){
 
 //include("./includes/BASEconsultas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]['USUARIOID'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
 //$MODO = $_GET['modo'];
@@ -86,7 +86,8 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		    `ACTcategorias`.`orden`,
 		    `ACTcategorias`.`zz_fusionadaa`,
 		    CO_color
-		FROM `UNmapa`.`ACTcategorias`
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
 		WHERE
 			1=1
 			$andid
@@ -94,10 +95,16 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		ORDER BY 
 			`ACTcategorias`.`orden` ASC
 	";
-	$ConsultaACTclases = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);	
+	$Consulta = $Conec1->query($query);
+	
+	if($Conec1->error!=''){
+		$Log['tx'][]='error en la consulta';
+		$Log['res']='err';
+		terminar($Log);
+	}
+		
 	//echo $query;
-	while($fila=mysql_fetch_assoc($ConsultaACTclases)){
+	while($fila= $Consulta->fetch_assoc()){
 		$ActCat[$fila['id_p_actividades_id']][$fila['id']]=$fila;
 		
 		if($fila['zz_fusionadaa']>0){
@@ -112,21 +119,23 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	//echo "<pre>";print_r($CatConversor);echo "</pre>";
 	
 	// consulta la clasificación de roles según sistema
-	$query="SELECT 
-		`SISroles`.`id`,
-	    `SISroles`.`nombre`,
-	    `SISroles`.`descripción`
-	FROM `UNmapa`.`SISroles`;
+	$query="
+		SELECT 
+			`SISroles`.`id`,
+		    `SISroles`.`nombre`,
+		    `SISroles`.`descripción`
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`SISroles`;
 	";
-	$ConsultaSISroles = mysql_query($query,$Conec1);
+	$Consulta = $Conec1->query($query);
 	
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
 		$Log['res']='err';
 		terminar($Log);
 	}
 	//echo $query;
-	while($row=mysql_fetch_assoc($ConsultaSISroles)){
+	while($row=$Consulta->fetch_assoc()){
 		$Roles[$row['id']]=$row;
 	}	
 	
@@ -139,21 +148,22 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		    `ACTaccesos`.`id_usuarios`,
 		    `ACTaccesos`.`nivel`,
 		    `ACTaccesos`.`autorizado`
-		FROM `UNmapa`.`ACTaccesos`
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
 		WHERE
 			1=1
 			$andid
 
 	";
-	$ConsultaACTaccesos = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
 		$Log['res']='err';
 		terminar($Log);
 	}
 	
 	//echo $query;
-	while($fila=mysql_fetch_assoc($ConsultaACTaccesos)){
+	while($fila=$Consulta->fetch_assoc()){
 		
 		$ActAcc[$fila['id_actividades']]['Acc'][$fila['nivel']][$fila['id']]=$fila;
 		
@@ -232,9 +242,9 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 			`actividades`.`zz_AUTOFECHACREACION` DESC
 	
 	";	
-	$ConsultaACT = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
 		$Log['res']='err';
 		terminar($Log);
 	}
@@ -252,14 +262,14 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	    `usuarios`.`log`
 	FROM `UNmapa`.`usuarios`
 	";	
-	$ConsultaUsu = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
+	$ConsultaU = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
 		$Log['res']='err';
 		terminar($Log);
 	}
 	
-	while($fila=mysql_fetch_assoc($ConsultaUsu)){
+	while($fila=$ConsultaU->fetch_assoc()){
 		$Usuarios[$fila['id']]=$fila;		
 	}
 		
@@ -281,8 +291,8 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		}
 	}	
 		
-	echo mysql_error($Conec1);
-	while($fila=mysql_fetch_assoc($ConsultaACT)){
+	echo $Conec1->error;
+	while($fila=$Consulta->fetch_assoc()){
 		
 		$cat['ACTcategorias']=array();
 		$cat['ACTcategorias']=$ActCat[$fila['id']];
@@ -306,12 +316,9 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		$ACT[$fila['id']]['Acc']['3']['n']['id_usuarios']=$fila['zz_AUTOUSUARIOCREAC'];
 		$ACT[$fila['id']]['Acc']['3']['n']['usuario']=$Usuarios[$fila['zz_AUTOUSUARIOCREAC']];
 		
-		//echo "<pre>";print_r($ACT[$fila['id']]);echo "</pre>";
+		
 	}
-	//echo "<pre>";print_r($ACT);echo "</pre>";
-	/*if($ID!=''&&mysql_num_rows($ConsultaARG)==0){
-		$ACT[]['resumen']="error en la selección de la argumentación";
-	}*/	
+
 	
 	$query="
 		SELECT `atributos`.`id`,
@@ -333,14 +340,14 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		geodatos.zz_borrada='0'
 		;
 	";
-	$ConsultaATT = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
 		$Log['res']='err';
 		terminar($Log);
 	}
 	
-	while($fila=mysql_fetch_assoc($ConsultaATT)){
+	while($fila=$Consulta->fetch_assoc()){
 		$cat=$CatConversor[$fila['categoria']];
 		$ATT[$fila['id']]=$fila;
 		$ATT[$fila['id']]['categoria']=$cat;
@@ -370,15 +377,15 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	and id_usuarios>0
 	";
 	
-	$ConsultaGEO = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
+	$Consulta = $Conec1->query($query);
+	if($Conec1->error!=''){
+		$Log['tx'][]=$Conec1->error;
 		$Log['res']='err';
 		terminar($Log);
 	}
 	
 	if ($ConsultaGEO != null) {
-		while($fila=mysql_fetch_assoc($ConsultaGEO)){
+		while($fila=$Consulta->fetch_assoc()){
 			if(isset($ACT[$fila['id_actividades']])){
 				if(!isset($ATT[$fila['id']])){continue;}
 				$f=array_merge($fila,$ATT[$fila['id']]);

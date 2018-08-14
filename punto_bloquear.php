@@ -48,7 +48,7 @@ function terminar($Log){
 	exit;
 }
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
 $HOY=date("Y-m-d");
@@ -132,20 +132,21 @@ $query="
 	    `actividades`.`zz_borrada`,
 	    `actividades`.`zz_AUTOFECHACREACION`,
 	    `actividades`.`zz_PUBLICO`
-	FROM `UNmapa`.`actividades`
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`
 	WHERE 
-	id='".$_POST['aid']."'
+		id='".$_POST['aid']."'
 ";
 
-$Consulta = mysql_query($query,$Conec1);
+$Consulta = $Conec1->query($query);
 
-if(mysql_error($Conec1)!=''){
-	$Log['tx'][]=mysql_error($Conec1);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= utf8_encode($query);
 	$Log['tx'][]= 'error al consultar base';
 	terminar($Log);
 }
-$Actividad=mysql_fetch_assoc($Consulta);
+$Actividad= $Consulta->fetch_assoc();
 $query="	
 	SELECT 
 		`ACTaccesos`.`id`,
@@ -154,16 +155,16 @@ $query="
 	    `ACTaccesos`.`nivel`,
 	    `ACTaccesos`.`autorizado`
 	FROM 
-		`UNmapa`.`ACTaccesos`
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
 	WHERE
 		id_actividades='".$_POST['aid']."'
 		AND
 		id_usuarios='".$UsuarioI."'
 
 ";
-$Consulta = mysql_query($query,$Conec1);
-if(mysql_error($Conec1)!=''){
-	$Log['tx'][]=mysql_error($Conec1);
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= $query;
 	$Log['tx'][]= 'error al consultar base';
 	terminar($Log);
@@ -171,7 +172,7 @@ if(mysql_error($Conec1)!=''){
 
 $Actividad['docente']='0';
 
-while($fila=mysql_fetch_assoc($Consulta)){
+while($fila=$Consulta->fetch_assoc()){
 	$Log['tx'][]=$fila['nivel'];
 	$Log['tx'][]=$Actividad['zz_AUTOUSUARIOCREAC'];
 	$Log['tx'][]=$UsuarioI;
@@ -197,7 +198,7 @@ if(
 
 $query="
 	UPDATE
-		`UNmapa`.`geodatos`
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`
 	SET
 	    `geodatos`.`zz_bloqueado` = '1',
 	    `geodatos`.`zz_bloqueadoUsu` = '".$UsuarioI."',
@@ -209,9 +210,9 @@ $query="
 		AND
 			`geodatos`.id='".$_POST['rid']."'
 ";
-$Consulta = mysql_query($query,$Conec1);
-if(mysql_error($Conec1)!=''){
-	$Log['tx'][]=mysql_error($Conec1);
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
 	$Log['tx'][]= $query;
 	$Log['tx'][]= 'error al consultar base';
 	terminar($Log);

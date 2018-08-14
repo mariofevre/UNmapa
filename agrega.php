@@ -1,4 +1,5 @@
 <?php
+// eliminar esta funcion solo se utiliza para crear categorías, pero es muy insegura
 /**
 * agrega.php
 *
@@ -36,7 +37,7 @@ include('./includes/conexionusuario.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 
 if($UsuarioI==""){header('Location: ./login.php');}
 
@@ -45,13 +46,14 @@ $query="
 	    `ACTaccesos`.`id_actividades`,
 	    `ACTaccesos`.`id_usuarios`,
 	    `ACTaccesos`.`nivel`
-	FROM `UNmapa`.`ACTaccesos`
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
 	WHERE id_usuarios='".$UsuarioI."'
 ";
-$Consulta = mysql_query($query,$Conec1);
-echo mysql_error($Conec1);
+$Consulta = $Conec1->query($query);
+echo $Conec1->error;	
 
-while($row=mysql_fetch_assoc($Consulta)){
+while($row=$Consulta->fetch_assoc()){
 	$Accesos[$row['id_usuarios']]=$row['nivel'];
 }
 
@@ -60,7 +62,7 @@ if($Accesos[$UsuarioI]<1){
 	echo "ERROR de Acceso 2";
 	print_r($Accesos);
 	echo "<br>".$UsuarioI;
-	break;
+	exit;
 }
 
 
@@ -88,17 +90,18 @@ if($Accesos[$UsuarioI]<1){
 	$Salidaid = $_POST['salidaid'];	
 	$Salidatabla = $_POST['salidatabla'];		
 	$PanelI = $_SESSION['panelcontrol']->PANELI;	
-	$Base = $_SESSION['panelcontrol']->DATABASE_NAME;
+	$Base = 'MAPAUBA';
 	$Index = $_SESSION['panelcontrol']->INDEX;		
 	$HOY = date("Y-m-d");
 	$HOYd = date("d");
 	$HOYm = date("m");
 	$HOYa = date("Y");
 	$Publicacion .= "<br><br>";
- 	$result = mysql_query('SHOW FULL COLUMNS FROM `'.$Tabla.'`',$Conec1);
+	$query='SHOW FULL COLUMNS FROM `'.$_SESSION['Unmapa'][$CU]->DATABASE_NAME.'`.`'.$Tabla.'`';
+ 	$Consulta = $Conec1->query($query);
 	print_r($_POST);
-    if (mysql_num_rows($result) > 0) {
-        while ($row = mysql_fetch_assoc($result)) {
+    if ($Consulta->num_rows > 0) {
+        while ($row = $Consulta->fetch_assoc()) {
         	
         	$campo = $row['Field'];
 			$datomas = $_POST[$campo];
@@ -121,9 +124,10 @@ if($Accesos[$UsuarioI]<1){
 						$campopadre = $o[4];
 						if($campopadre==''){
 								$_SESSION['DEBUG']['mensajes'][] = "campo padre: indefinido, explorando...";
-								$padre = mysql_query('SHOW FULL COLUMNS FROM `'.$tablapadre.'`',$Conec1);
+								$query='SHOW FULL COLUMNS FROM `'.$_SESSION['Unmapa'][$CU]->DATABASE_NAME.'`.`'.$tablapadre.'`';
+								$padre = $Conec1->query($query);
 								$seteado='no';
-								While($rp= mysql_fetch_assoc($padre)){
+								While($rp=$padre->fetch_assoc()){
 									if($seteado=='no'&&$rp['Field']!='id'){
 										$seteado='si';
 										$campopadre = $rp['Field'];
@@ -144,22 +148,23 @@ if($Accesos[$UsuarioI]<1){
 							SELECT 
 								* 
 							FROM
-								 $tablapadre
+								 `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$tablapadre
 								 WHERE $campopadre='$nuevocontenido' 
 						";
-						$existe=mysql_query($query,$Conec1);
-						$Publicacion .= mysql_error($Conec1);
-						if(mysql_num_rows($existe)>0){
+						$existe=$Conec1->query($query);
+						$Publicacion .= $Conec1->error;	
+						if($existe->num_rows>0){
 							$Publicacion .= "<br>nombre de item existente, creación anulada";
 							$Publicacion .= $query;
-							$Idnuevo=mysql_result($existe,0,'id');
+							$row=$existe->fetch_assoc();
+							$Idnuevo=$row['id'];
 							$Publicacion .= "<br>id reciclado: ".$Idnuevo;
 							$datomas = $Idnuevo;
 						}else{						
-							$query = "INSERT INTO $tablapadre SET $campopadre='$nuevocontenido'";
-							mysql_query($query,$Conec1);
-							$Publicacion .= mysql_error($Conec1);
-							$Idnuevo = mysql_insert_id($Conec1);
+							$query = "INSERT INTO `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$tablapadre SET $campopadre='$nuevocontenido'";
+							$ccc = $Conec1->query($query);
+							$Publicacion .= $Conec1->error;	
+							$Idnuevo = $ccc->insert_id;
 							$Publicacion .= "nuevo id: ".$Idnuevo;
 							$datomas = $Idnuevo;
 							$Publicacion .= "agregará: ".$datomas;
@@ -177,6 +182,8 @@ if($Accesos[$UsuarioI]<1){
 				$Datos .= " `" . $campo . "`='" .  $HOY . "',"; /* este campo nunca se debe modificar, debe ser una impresión del momento de creación del registro */
 			}elseif($Typo == 'zz_'&& $campo == 'zz_AUTOPANEL'){
 				$Datos .= " `" . $campo . "`='" .  $PanelI . "',"; /* este campo nunca se debe modificar, debe ser una impresión del momento de creación del registro */
+			}elseif($Typo == 'zz_'&& $campo == 'zz_AUTOUSUARIOCREAC'){
+				$Datos .= " `" . $campo . "`='" .  $UsuarioI . "',"; /* este campo nunca se debe modificar, debe ser una impresión del momento de creación del registro */
 			}elseif($Typo == 'FI_'){
 				if(isset($_FILES['archivo_F'])){
 					$imagenid = $_FILES['archivo_F']['name'];	
@@ -295,14 +302,14 @@ $Publicacion .= "<br>";
 $Publicacion .= "<br>";
 
 
-$query="INSERT INTO $Tabla SET $Datos";
-mysql_query($query,$Conec1);
+$query="INSERT INTO `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$Tabla SET $Datos";
+$Consulta = $Conec1->query($query);
 $Publicacion .= $query;
-$Id = mysql_insert_id($Conec1);
+$Id = $Consulta->insert_id;
 $NID = $Id;
 $Publicacion .= $Id . "<br>";
 
-$Publicacion .= "error mysql: ". mysql_error($_SESSION['panelcontrol']->Conec1);
+$Publicacion .= "error mysql: ". $Conec1->error;
 
 
 if(isset($_POST['__NID_valor'])){

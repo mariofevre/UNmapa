@@ -40,14 +40,16 @@ include('./includes/conexionusuario.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){
-	echo "usuario no identificado";break;
+	echo "usuario no identificado";exit;
 	header('Location: ./login.php');
 }
 
 // función de consulta de actividades a la base de datos 
 include("./actividades_consulta.php");
+
+
 
 $ID = isset($_GET['actividad'])?$_GET['actividad'] : '';
 
@@ -66,7 +68,7 @@ if(isset($_POST['actividad'])){
 	$Actividad='';
 }
 if($Actividad==''){
-	echo "ERROR de Acceso 1";break;	
+	echo "ERROR de Acceso 1";exit;	
 	header('location: ./actividades.php');	//si no hay una actividad definida esta página no debería consultarse
 
 }
@@ -96,8 +98,10 @@ if($Coordinacion!='activa'){
 }
 
 //funcion para extraer la estructura de la tabla de almacenamineto de la actividad
-$c = mysql_query("SHOW FULL COLUMNS FROM `UNmapa`.`actividades`");
-while($row = mysql_fetch_assoc($c)){
+
+$query="SHOW FULL COLUMNS FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`";
+$Consulta = $Conec1->query($query);
+while($row = $Consulta->fetch_assoc()){
 	$Tabla[$row['Field']]=$row;
 };
 $Tabla['ACTcategorias']['Comment']='Menú de categorias';
@@ -138,20 +142,20 @@ if(isset($_POST['accion'])){
 			
 			$query = "		
 				UPDATE 
-					`UNmapa`.`actividades`
+					`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`
 				SET
 					$set
 				WHERE `id` = '".$Actividad."'
 				";
-			mysql_query($query,$Conec1);
-			echo mysql_error($Conec1);
+			$Consulta = $Conec1->query($query);
+			echo $Conec1->error;
 			$ID=$Actividad;
 			
 			//echo $query;
-			//break;
+			//exit;
 		}else{
 			echo "no se encontraron permisos de edición de actividad para su usuario."; 
-			break;
+			exit;
 		}
 		
 		//recarga los datos de la actividad
@@ -351,7 +355,7 @@ label.upload:hover{
 </head>
 
 <body>
-	
+	<script  type="text/javascript" src="./js/jquery/jquery-1.12.0.min.js"></script>	
 	<?php
 	include('./includes/encabezado.php');
 	
@@ -426,7 +430,7 @@ label.upload:hover{
 				echo "<input type='button' style='display:none;' title='cancelar eliminación' id='elimNo' value='Cancelar' onclick='this.style.display=\"none\";document.getElementById(\"elimC\").style.display=\"none\";document.getElementById(\"elim\").style.display=\"inline-block\";'>";
 				echo "<input type='submit' style='display:none;' title='Al eliminarse una actividad, esta se enviará a la papelera, no estará visible para ningún usuario' name='accionelim' value='Confirmo Eliminar' id='elimC'>";
 			}
-			
+			echo "<input type='submit' title='Al duplicarse se generará una nueva actividad con igual configuración sin valores cargados' onclick='duplicar(event)' value='Duplicar'>";
 			
 			echo "<br>";
 			echo "<input type='hidden' name='actividad' id='actividad' value='$ID'>";	
@@ -510,7 +514,7 @@ label.upload:hover{
 									}
 								}
 								echo "<td>".$Contenido['categoriaspuntos'][$cat['id']]."</td>";
-								echo "<td><a target='_blank' href='agrega_f.php?salida=cerrar&accion=cambia&tabla=$k&id=".$cat['id']."' >editar<a></td>";
+								echo "<td><a target='_blank' href='agrega_f.php?salida=actividad_config&salidaid=".$Actividad."&tabla=".$k."&accion=cambia&id=".$cat['id']."' >editar</a></td>";
 								echo "<td>";
 								
 									if($cat['zz_fusionadaa']!=0){// las categorias ya fusionadas se desfusionan antes de generar nuevas fusiones.
@@ -559,6 +563,42 @@ label.upload:hover{
 		?>
 	
 	</div></div>
+	
+	<script type='text/javascript'>
+	
+		_Aid='<?php echo $ID;?>';
+		
+		function duplicar(_event){
+			
+			_event.preventDefault();
+			_datos={
+				'accion':'duplicar',
+				'dupid':_Aid				
+			};
+			
+			$.ajax({
+				data: _datos,
+				url:   './actividades_crear.php',
+				type:  'post',
+				success:  function (response){
+					
+					var _res = $.parseJSON(response);
+					//console.log(_res);
+					
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					} 
+					if(_res.res=='exito'){
+						console.log(_res);
+						window.location.assign('./actividad_config.php?actividad='+_res.data.nid);
+					}else{
+						alert('ocurrió algún error en la consulta');
+					}
+					
+				}
+			})
+		}
+	</script>
 	
 	<script type='text/javascript'>
 		
@@ -660,11 +700,6 @@ label.upload:hover{
 	</form>
 	
 	<?php
-include('./includes/pie.php');
-	/*medicion de rendimiento lamp*/
-	$endtime = microtime(true);
-	$duration = $endtime - $starttime;
-	$duration = substr($duration,0,6);
-	echo "<br>tiempo de respuesta : " .$duration. " segundos";
+include('./_serverconfig/pie.php');
 ?>
 </body>

@@ -1,4 +1,5 @@
 <?php
+// eliminar esta funcion solo se utiliza para formuladrio de edición de categorías, pero es muy insegura
 /**
 * agrega_f.php
 *
@@ -34,7 +35,7 @@ include('./includes/conexionusuario.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 
 if($UsuarioI==""){header('Location: ./login.php');}
 
@@ -393,9 +394,10 @@ if($UsuarioI==""){header('Location: ./login.php');}
 		$Accion = "agrega";
 	}		
 	
-	
-	$Consulta = mysql_query("SELECT * FROM $Tabla WHERE id='$Id'");
-	$Consulta_filas = mysql_num_rows($Consulta);
+	$query="SELECT * FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$Tabla WHERE id='$Id'";
+	$Consulta = $Conec1->query($query);
+	$Consulta_filas = $Consulta->num_rows;
+	$Registro=$Consulta->fetch_assoc();
 	
 	/*print_r($config);*/
 
@@ -408,6 +410,25 @@ if($UsuarioI==""){header('Location: ./login.php');}
 	
 	if ($Accion == "agrega" || $Accion == "cambia"){
 	?>
+	<script type="text/javascript">
+	function intepretarcolor(_Cstring){		
+		return _Cstring;
+	}	
+
+	function cargaColorValue(_this){
+		_muestra=_this.nextSibling;
+		_contenido=_this.value;
+		_colorVal=intepretarcolor(_contenido);
+		_muestra.style.backgroundColor=_colorVal;
+		
+	}
+	function cargaColor(_id,_contenido){
+		_muestra=document.getElementById(_id);
+		_colorVal=intepretarcolor(_contenido);		
+		_muestra.style.backgroundColor=_colorVal;		
+	}	
+</script>
+
 			<div id="marco">
 				<form action="./<?php echo $Href;?>" method="POST" enctype='multipart/form-data'>
 					<input type="hidden" name="tabla" value="<?php echo $Tabla;?>">
@@ -427,12 +448,13 @@ if($UsuarioI==""){header('Location: ./login.php');}
 					<div id="hoja">	
 			
 						<?php	
-					    $result = mysql_query('SHOW FULL COLUMNS FROM `'.$Tabla.'`');
-					    if (mysql_num_rows($result) > 0) {
+						$query='SHOW FULL COLUMNS FROM `'.$_SESSION['Unmapa'][$CU]->DATABASE_NAME.'`.`'.$Tabla.'`';
+					    $Consulta = $Conec1->query($query);
+					    if ($Consulta->num_rows > 0) {
 					    			 
 							$empaquetado = -100;
 							$borradato="no";
-					        while ($row = mysql_fetch_assoc($result)) {
+					        while ($row = $Consulta->fetch_assoc()) {
 					        	
 								foreach($CampoS as $c){
 									
@@ -446,26 +468,10 @@ if($UsuarioI==""){header('Location: ./login.php');}
 								if($row['Default']!=''&&$row['Default']!=null){$Def=$row['Default'];}else{$Def='';}
 								
 					        	$wheremas ="";
-					        	if($row['Field']=='id_p_grupos_id_nombre_tipoa'&&$Tabla=='comunicaciones'){
-					        		$comentario = $config['com-grupoa'];
-					        	}elseif(
-					        		$row['Field']=='id_p_grupos_id_nombre_tipob'&&$Tabla=='comunicaciones'){$comentario = $config['com-grupob'];
-								}elseif(
-					        		$row['Field']=='ident'&&$Tabla=='comunicaciones'){$comentario = $config['com-ident'];
-								}elseif(
-					        		$row['Field']=='identdos'&&$Tabla=='comunicaciones'){$comentario = $config['com-identdos'];
-								}else{
-									$comentario = $row['Comment'];
-								}
-								
-								
-								if($row['Field']=='sentido'&&$Tabla=='comunicaciones'){$sale = $config['com-sale'];$entra = $config['com-entra'];}
 					        	
-								if(($row['Field']=='grupo'||$row['Field']=='grupob')&&$Tabla=='comunicaciones'){
-									$campo=$row['Field'];
-									$Consultalista = mysql("$Base", "SELECT $campo FROM $Tabla WHERE id_p_paneles_id_nombre='$PanelI' GROUP BY $campo");
-								}else{$Consultalista="";}
+								$comentario = $row['Comment'];
 								
+									
 								
 								if($empaquetado == -100){echo "<div class='paquete'>";$empaquetado =0;}
 								
@@ -476,7 +482,7 @@ if($UsuarioI==""){header('Location: ./login.php');}
 								}
 								
 								if($Accion != "agrega"){
-									$contenido = mysql_result($Consulta, 0, $row['Field']);
+									$contenido = $Registro[$row['Field']];
 								}elseif($Accion == "agrega"){
 									$x = "C-".$row['Field'];
 									$contenido = $_GET[$x];
@@ -543,9 +549,9 @@ if($UsuarioI==""){header('Location: ./login.php');}
 										
 										if($contenido!=''){
 											
-											echo "<script type='text/javascript'>";
-											echo "cargaColor('MuCol".$row['Field']."','".$contenido."')";
-											echo "</script>";				
+											echo "<script type='text/javascript'>
+											cargaColor('MuCol".$row['Field']."','".$contenido."');
+											</script>";				
 										}									
 									}
 								}elseif($i != 'id_'){
@@ -758,21 +764,7 @@ if($UsuarioI==""){header('Location: ./login.php');}
 											<input id="<?php echo $row['Field'];?>" class="chico" type="text" size="2" name="<?php echo $row['Field'];?>" value="<?php echo $contenido;?>">
 											
 											<?php
-											if($Consultalista != ''){
-												while ($listaitem = mysql_fetch_assoc($Consultalista)) {
-													$itemlista=$listaitem[$row['Field']];
-													?>	
-													<a onclick="document.getElementById('<?php echo $row['Field'];?>').value = '<?php echo $itemlista;?>'">
-														<?php echo $itemlista;?>
-													</a>
-													<?php
-												}
-												?>
-												<a onclick="document.getElementById('<?php echo $row['Field'];?>').value = ''">
-														ninguno
-												</a>
-												<?php
-											}
+											
 										}
 										
 									}elseif($campofijo == $row['Field']){
@@ -807,51 +799,7 @@ if($UsuarioI==""){header('Location: ./login.php');}
 										if($Typolink == "id_p" && ($config['com-grupob']!="NO" || $row['Field']!="id_p_grupos_id_nombre_tipob")){	
 											$Baselink = substr($row['Field'],0,6);
 											/* para tablas padre en otras bases*/
-											if($Baselink == "id_p_B"){
-												$o = explode("_", $row['Field']);
-												$basepadre = $o[3];
-												$tablapadre = $o[4];
-												$campopadre = $o[5];
-												if($o[6] != ""){$referencia = $o[6];}else{$referencia = $campopadre;}
-												$comentario;
-												
-											/*	echo "<br> linkeado a: base: ".$basepadre." tabla: ".$tablapadre." campo: ".$campopadre." referencia: ".$referencia;
-											*/
-												$Consultadosactual = mysql("$basepadre", "SELECT * FROM $tablapadre WHERE $campopadre = '$contenido' ORDER BY $referencia");
-												echo mysql_error();
-												if(mysql_num_rows($Consultadosactual)>0){
-													$contenidopadre = mysql_result($Consultadosactual, 0, $campopadre);
-												}
-													$Consultados = mysql("$basepadre", "SELECT * FROM $tablapadre");
-													$Consultados_filas = mysql_num_rows($Consultados);	
-												echo "<select name='".$row['Field']."'>";
-												echo "<option value='0'>-elegir-</option>";
-												if($Consultados_filas > 0){
-													$filas = 0;
-													if($Accion == "agrega" && $row['Field'] == "id_p_B_usuarios_usuarios_id_nombre_autor"){$contenidopadre = $UsuarioI;}elseif($Accion == "agrega"){$contenidopadre = "";}
-													if($Accion == "cambia"){$contenidopadre=$contenido;}
-											        while ($filas < $Consultados_filas ) {
-											        	
-														$tx = mysql_result($Consultados, $filas, $referencia);
-														$idl = mysql_result($Consultados, $filas, $campopadre);
-														
-														if($contenidopadre == $idl)
-														{
-															$selecta = "selected='yes'";
-														}
-														
-														else
-														{
-															$selecta = "";
-														}
-														
-														echo "<option value='" . $idl . "'" . $selecta . ">". $tx . "</option>";
-														$filas ++;
-													}
-													
-													echo "</select><br>";
-												}
-											}else{
+											
 												
 												/* para tablas padre en la misma base*/
 												$o = explode("_", $row['Field']);
@@ -870,21 +818,20 @@ if($UsuarioI==""){header('Location: ./login.php');}
 													echo " <a href='./agrega_f.php?tabla=$tablapadre&salida=$Salida&accion=agrega$extracondicion'>agregar ".$tablapadre."</a>";
 													 * */
 												}
-												
-												$estructurapadre = mysql_query('SHOW FULL COLUMNS FROM '.$basepadre.'.'.$tablapadre);
-												echo mysql_error();
-						  						if (mysql_num_rows($estructurapadre) > 0) {
-						  							/*$a = mysql_fetch_assoc($estructurapadre);*/
+												$query='SHOW FULL COLUMNS FROM '.$basepadre.'.'.$tablapadre;
+												$ConsultaEP = $Conec1->query($query);
+												$Conec1->error;	
+						  						if ($ConsultaEP->num_rows > 0) {
 						  							$campozzborra='no';
 													$wheremas = "WHERE '1'='1'";
-						  							while ($value = mysql_fetch_assoc($estructurapadre)){
+						  							while ($value =$ConsultaEP->fetch_assoc()){
 						  								if($value['Field']=='zz_borrada'){
 															$wheremas .= " AND zz_borrada='0'";
 														}
 													}					  					
-						  							mysql_data_seek($estructurapadre, 0);
+						  							$ConsultaEP->data_seek(0);
 						  							
-													while ($value = mysql_fetch_assoc($estructurapadre)){
+													while ($value = $ConsultaEP->fetch_assoc()){
 														if(substr($value['Field'],0,15)=="id_p_paneles_id"){
 															$wheremas .= " AND ".$tablapadre.".".$value['Field']." = ".$PanelI;
 														}
@@ -906,9 +853,9 @@ if($UsuarioI==""){header('Location: ./login.php');}
 												if($tablapadre=='comunicaciones'){
 													$ORDER = "ORDER BY ".$tablapadre.".id DESC";
 												}
-												
-												$resultdos = mysql_query('SHOW FULL COLUMNS FROM '.$padre);		
-												if (mysql_num_rows($result) > 0) {
+												$query='SHOW FULL COLUMNS FROM '.$padre;
+												$ConsultaEP = $Conec1->query($query);
+												if ($ConsultaEP->num_rows > 0) {
 													if($tablapadre == 'grupos')
 														{$wheremas .= " AND ".$tablapadre.".id_p_paneles_id_nombre = '$PanelI' ";
 													}elseif($tablapadre == 'paneles'){
@@ -918,10 +865,9 @@ if($UsuarioI==""){header('Location: ./login.php');}
 													
 													/*echo $JOIN." ".$wheremas;*/
 													$query= "SELECT * FROM $padre $JOIN $wheremas $GROUP $ORDER";
-													$Consultados = mysql_query($query);
-													echo mysql_error();
-													$Consultados_filas = mysql_num_rows($Consultados);	
-													$Consultados_filas_cuenta = 0;
+													$ConsultaR = $Conec1->query($query);
+													echo $Conec1->error;
+													$Consultados_filas =$ConsultaR->num_rows;	
 													
 													echo "<input type='hidden' id='".$row['Field']."' name='".$row['Field']."' value='".$contenido."'>";
 													
@@ -929,93 +875,47 @@ if($UsuarioI==""){header('Location: ./login.php');}
 													if($row['Field']=='id_p_comunicaciones_id_ident_entrante'||$row['Field']=='id_p_comunicaciones_id_ident_rechazada'||$row['Field']=='id_p_comunicaciones_id_ident_aprobada'){
 														$readonly = "READONLY";
 													}else{$readonly = "";}/* algunos campos no permiten la autogeneración de nuevos registros asociados*/
-														
-													if($row['Field'] == 'id_p_DOCdocumento_id' && $Tabla == 'DOCversion'){ /* no despliega listado en caso de estar llamando la tabla de vesriones de docuemntos*/
-														echo "<input type='button' style='position:relative;' class='chico' id='".$row['Field']."-n' name='".$row['Field']."_n' value=''";
-														?>
-														onclick="window.location='./agrega_f.php?tabla=DOCdocumento&accion=cambia&id=<?php echo $contenido;?>';"
-														<?php
-														echo ">";
-													}else{
-														
-														echo "<input $readonly class='chico' id='".$row['Field']."-n' name='".$row['Field']."_n' value=''";
-														?>
-															 onKeyUp="
-															 _valor = this.value;
-															 _campo = '<?php echo $row['Field'];?>';
-															 document.getElementById('<?php echo $row['Field'];?>').value = includes(_campo, _valor);"												 
-														<?php
 													
+													echo "<input $readonly class='chico' id='".$row['Field']."-n' name='".$row['Field']."_n' value=''";
+													?>
+														 onKeyUp="
+														 _valor = this.value;
+														 _campo = '<?php echo $row['Field'];?>';
+														 document.getElementById('<?php echo $row['Field'];?>').value = includes(_campo, _valor);"												 
+													<?php
+												
+												
+													echo"><br>";
+													?>
+													   <a 
+													    onclick="
+													    	document.getElementById('<?php echo $row['Field'];?>-n').value = '';
+													    	document.getElementById('<?php echo $row['Field'];?>').value = '0'
+													    ">
+															-vacio-
+														</a>
+													<?php
 													
-														echo"><br>";
-														?>
-														   <a 
-														    onclick="
-														    	document.getElementById('<?php echo $row['Field'];?>-n').value = '';
-														    	document.getElementById('<?php echo $row['Field'];?>').value = '0'
-														    ">
-																-vacio-
-															</a>
-														<?php
-													}
 													
 													$campovalor = isset($o[4])?$o[4]:'nombre';
 													
 													$ocultoporexeso='no';
-													while($Consultados_filas_cuenta < $Consultados_filas){
-														$v = mysql_result($Consultados, $Consultados_filas_cuenta, $campovalor);
+													$cc=0;
+													while($roww = $Consulta->fetch_assoc()){
+														$cc++;														
+														$v = $row[$campovalor];
 														$va = $v;
 														
-														if($Consultados_filas_cuenta>'50'&&$ocultoporexeso=='no'){
+														if($cc>'50'&&$ocultoporexeso=='no'){
 															//oculta los resultados posteriores al numero 50 para evitar formularios confusos
 															$ocultoporexeso='si';
 															echo "<br><a ";?>onclick="this.nextSibling.style.display='block';"<?php echo ">más (más viejos)-></a>";
 															echo "<div class='dato' style='display:none;'>";
 														}
 														
-														if($row['Field']=='id_p_comunicaciones_id_ident_entrante'||$row['Field']=='id_p_comunicaciones_id_ident_rechazada'||$row['Field']=='id_p_comunicaciones_id_ident_aprobada'){
-															if(mysql_result($Consultados, $Consultados_filas_cuenta, 'preliminar')=='extraoficial'){$o='x';}else{$o='';}
-															$PREN['entrante']=$config['com-entra-preN'.$o];
-															$PREN['saliente']=$config['com-sale-preN'.$o];	
-															
-															$sentido=mysql_result($Consultados, $Consultados_filas_cuenta, 'sentido');
-															
-															$ca=$GRUPOS['a'][mysql_result($Consultados, $Consultados_filas_cuenta, 'id_p_grupos_id_nombre_tipoa')]['codigo'];
-															$na=$GRUPOS['a'][mysql_result($Consultados, $Consultados_filas_cuenta, 'id_p_grupos_id_nombre_tipoa')]['nombre'];
-															$cb=$GRUPOS['b'][mysql_result($Consultados, $Consultados_filas_cuenta, 'id_p_grupos_id_nombre_tipob')]['codigo'];
-															$nb=$GRUPOS['b'][mysql_result($Consultados, $Consultados_filas_cuenta, 'id_p_grupos_id_nombre_tipob')]['nombre'];
-															
-															if($ca!=''){$A = $ca;}else{$A = $na;}
-															if($cb!=''){$B = $cb;}else{$B = $nb;}	
-															
-																			
-															$v = $PREN[$sentido].$v;
-															$va = "<span class='contenedor aclara'><span class='subcontenedor oculto'><span class='contenido oculto'>".$na."</span></span><span class='contenido aclara'>".$A."</span></span><span class='contenedor aclara'><span class='subcontenedor oculto'><span class='contenido oculto'>".$nb."</span></span><span class='contenido aclara'>".$B."</span></span>".$v;
-											
-															if(mysql_result($Consultados, $Consultados_filas_cuenta, 'id')==$contenido){
-																?>
-																<script type='text/javascript'>
-																	document.getElementById('<?php echo $row['Field'];?>-n').value = '<?php echo $v;?>';
-																	
-																</script>
-																<?php																
-															}
-															if($row['Field']=='id_p_comunicaciones_id_ident_entrante'){
-																if($sentido=='saliente'){
-																	$Opcionespostergadas[mysql_result($Consultados, $Consultados_filas_cuenta, 'id')]=$v;
-																	$Consultados_filas_cuenta ++;continue;/* saltea el restro del while evitando que se cargue inicialmente la opción */
-																}
-															}
-															if(($row['Field']=='id_p_comunicaciones_id_ident_rechazada'||$row['Field']=='id_p_comunicaciones_id_ident_aprobada')){
-																if($sentido=='entrante'){
-																	$Opcionespostergadas[mysql_result($Consultados, $Consultados_filas_cuenta, 'id')]=$v;
-																	$Consultados_filas_cuenta ++;continue;/* saltea el restro del while evitando que se cargue inicialmente la opción */
-																}
-															}		
-														}
-														$vt = mysql_result($Consultados, $Consultados_filas_cuenta, 'nombre');
+														$vt = $roww['nombre'];
 														$v = ($v != '') ? $v : $vt;
-														$idv = mysql_result($Consultados, $Consultados_filas_cuenta, 'id');
+														$idv = $roww['id'];
 														if($idv==$contenido){
 															?>
 															<script LANGUAGE="javascript">
@@ -1036,21 +936,7 @@ if($UsuarioI==""){header('Location: ./login.php');}
 														</script>	
 																
 														<?php													
-														if($row['Field'] != 'id_p_DOCdocumento_id' || $Tabla !='DOCversion'){ /* no despliega listado en caso de estar llamando la tabla de vesriones de docuemntos*/
-															?>
-															
-														    <a 
-														    title='<?php echo $vt;?>'
-															
-														   	ondblclick="window.location='./agrega_f.php?accion=cambia&tabla=<?php echo $tablapadre;?>&id=<?php echo $idv;?>';"												   
-														    onclick="
-														    	document.getElementById('<?php echo $row['Field'];?>-n').value = '<?php echo $v;?>';
-														    	document.getElementById('<?php echo $row['Field'];?>').value = '<?php echo $idv;?>'
-														    ">
-																<?php echo $va;?>
-															</a>
-														<?php
-														}
+														
 														$Consultados_filas_cuenta ++;
 													}
 
@@ -1081,26 +967,10 @@ if($UsuarioI==""){header('Location: ./login.php');}
 														unset($Opcionespostergadas);
 													}
 													
-													
-													/* variante select 
-													echo "<select name='".$row['Field']."'>";
-													echo "<option value=''>-elegir-</option>";
-													
-													while($Consultados_filas_cuenta < $Consultados_filas){
-														$v = mysql_result($Consultados, $Consultados_filas_cuenta, 'nombre');
-														$idv = mysql_result($Consultados, $Consultados_filas_cuenta, 'id');
-														if($contenido == $idv)
-														{$selecta = "selected='yes'";}
-														else{$selecta = "";}	
-													    echo "<option value='" . $idv . "'" . $selecta . ">". $v . "</option>";
-														$Consultados_filas_cuenta ++;
-													}
-													echo "</select>";		
-													 
-													*/							
+																	
 													
 												}
-											}	
+												
 										}else{
 											$empaquetado --;
 											$borradato="si";
@@ -1159,24 +1029,6 @@ if($UsuarioI==""){header('Location: ./login.php');}
 				</form>
 			</div>
 
-<script type="text/javascript">
-	function intepretarcolor(_Cstring){		
-		return _Cstring;
-	}	
-
-	function cargaColorValue(_this){
-		_muestra=_this.nextSibling;
-		_contenido=_this.value;
-		_colorVal=intepretarcolor(_contenido);
-		_muestra.style.backgroundColor=_colorVal;
-		
-	}
-	function cargaColor(_id,_contenido){
-		_muestra=document.getElementById(_id);
-		_colorVal=intepretarcolor(_contenido);		
-		_muestra.style.backgroundColor=_colorVal;		
-	}	
-</script>
 
 	
 	<?php
@@ -1199,12 +1051,13 @@ elseif($Accion == "borra"){
 					<div id="hoja">	
 			
 						<?php	
-					    $result = mysql_query('SHOW FULL COLUMNS FROM `'.$Tabla.'`');
-					    if (mysql_num_rows($result) > 0) {		    	
+						$query='SHOW FULL COLUMNS FROM `'.$Tabla.'`';
+					    $Consulta = $Conec1->query($query);
+					    if ($Consulta->num_rows> 0) {		    	
 							
-					        while ($row = mysql_fetch_assoc($result)) {
+					        while ($roww = $Consulta->fetch_assoc()) {
 					 	
-					        	$contenido = mysql_result($Consulta, 0, $row['Field']);
+					        	$contenido = $row[$roww['Field']];
 		
 								if($Accion == "agrega"){$contenido = "";}					
 								echo '<div class="campo">';	
@@ -1223,7 +1076,7 @@ elseif($Accion == "borra"){
 	}
 	?>	
 	
-</body>
+
 
 <script type="text/javascript">
 
@@ -1260,3 +1113,4 @@ function alterna(_id, _estado){
 
 
 </script>
+</body>

@@ -25,19 +25,21 @@
 */
 
 
-//ini_set('display_errors', '1');
+ini_set('display_errors', '1');
+error_reporting(E_ERROR );
 //if($_SERVER['SERVER_ADDR']=='192.168.0.252')ini_set('display_errors', '1');
 //ini_set('display_startup_errors', '1');ini_set('suhosin.disable.display_errors','0'); error_reporting(-1);
-
+session_start();
+session_destroy();
 include('./includes/conexion.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-session_destroy();
 
+if(!isset( $_POST['log'])){ $_POST['log']='';}
 
 // $_GET['DEST'] define a donde se dirigi´ra luego de loguearse
-
+$mensaje='';
 if(isset($_POST['loguear'])){
 	$pass = md5($_POST['pass']);
 	
@@ -46,19 +48,29 @@ if(isset($_POST['loguear'])){
 		    `usuarios`.`pass`,
 		    `usuarios`.`log`,
 		    `usuarios`.`zz_activo`	    
-		FROM `UNmapa`.`usuarios`
-		WHERE BINARY log='".$_POST['log']."'
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
+		WHERE 
+			BINARY log='".$_POST['log']."'
 	";
-	$Consulta = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);
-		
-	if(mysql_num_rows($Consulta)>0){
-		if(mysql_result($Consulta, 0, 'zz_activo')=='1'){
-			$passbase = mysql_result($Consulta, 0, 'pass');
+	
+	//$Consulta = mysql_query($query,$Conec1);
+	$Consulta = $Conec1->query($query);
+	echo  $Conec1->error;
+//	echo mysql_error($Conec1);
+
+	
+	if($Consulta->num_rows>0){
+		$row = $Consulta->fetch_assoc();
+		if($row['zz_activo']=='1'){
+			$passbase = $row['pass'];
 			if($passbase==$pass){
 				session_start();
 		   		session_regenerate_id (true);
-				$_SESSION['USUARIOID']= mysql_result($Consulta, 0, 'id');
+				
+				//print_r($_SESSION['Unmapa']);
+				$_SESSION['Unmapa'][$CU]->USUARIO['uid'] = $row['id'];
+				//print_r($_SESSION['Unmapa']);
 				
 				$l="./actividades.php"; //por defecto dirije al listado de actividades. luego de logear
 				if($_POST['DDEST']!=''){
@@ -84,7 +96,7 @@ if(isset($_POST['loguear'])){
 ?>
 <html>
 <head>
-	<title>UNmapa - Entorno Plataforma de producción y conocimiento colectivo de información territorial</title>
+	<title><?php echo $_SESSION['Unmapa'][$CU]->PRESENTACION_TITULO;?></title>
 	<?php include("./includes/meta.php");?>
 	<link href="./css/treccppu.css" rel="stylesheet" type="text/css">
 </head>
@@ -92,11 +104,10 @@ if(isset($_POST['loguear'])){
 <body>
 	<div id="pageborde">
 		<div id="page">
-			<h1>UNmapa</h1>
-			<p>
-				Bienvenido a nuestra web de trabajo.<br>
+			<h1><?php echo $_SESSION['Unmapa'][$CU]->PRESENTACION_NOMBRE;?></h1>
+			<h2>Una implementación del proyecto UNmapa</h2>
+			<p>Bienvenido a nuestra web de trabajo.<br>
 		    </p>
-		    
 			<p class='error'>
 				<?php echo $mensaje;?><br>
 		    </p>	
@@ -161,7 +172,7 @@ if(isset($_POST['loguear'])){
 		</div>
 	</div>
 	<?php
-	include('./includes/pie.php');
+	include('./_serverconfig/pie.php');
 	?>
 </body>
 </html>

@@ -40,24 +40,26 @@ include('./includes/conexionusuario.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){
-	echo "usuario no identificado";break;
+	echo "usuario no identificado";exit;
 	header('Location: ./login.php');
 }
 
-	$query="SELECT 
+	$query="
+	SELECT 
 		`SISroles`.`id`,
 	    `SISroles`.`nombre`,
 	    `SISroles`.`descripción`
-	FROM `UNmapa`.`SISroles`
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`SISroles`
 	order by id desc
 	";
-	$ConsultaSISroles = mysql_query($query,$Conec1);
-	echo mysql_error($Conec1);	
+	$Consulta = $Conec1->query($query);
+	echo $Conec1->error;
 	//echo $query;
 	
-	while($row=mysql_fetch_assoc($ConsultaSISroles)){
+	while($row = $Consulta->fetch_assoc()){
 		$Roles[$row['id']]=$row;
 	}	
 	
@@ -82,7 +84,7 @@ if(isset($_POST['actividad'])){
 	$Actividad='';
 }
 if($Actividad==''){
-	echo "ERROR de Acceso 1";break;	
+	echo "ERROR de Acceso 1";
 	header('location: ./actividades.php');	//si no hay una actividad definida esta página no debería consultarse
 }
 
@@ -117,7 +119,7 @@ if($UsuarioI==$Contenido['zz_AUTOUSUARIOCREAC']){
 
 if($Coordinacion!='activa'){
 	echo "<h2>Error en el acceso, no se identificó nivel ".$Roles[2]['nombre']." o  más para su usuario en esta actividad.</h2>";
-	break;
+	exit;
 }
 
 
@@ -125,12 +127,14 @@ $Actividad=reset(actividadesconsulta($ID,$seleccion));
 //echo "<pre>";print_r($Actividad);echo "</pre>";
 if($Actividad['zz_PUBLICO']!='1'&&$Actividad['zz_AUTOUSUARIOCREAC']!=$UsuarioI){
 	echo "<h2>Error en el acceso, esta actividad no se encuentra aún publicada y usted no se encuentra registrado como autor de la misma.</h2>";
-	break;
+	exit;
 }
 
 //funcion para extraer la estructura de la tabla de almacenamineto de la actividad
-$c = mysql_query("SHOW FULL COLUMNS FROM `UNmapa`.`actividades`");
-while($row = mysql_fetch_assoc($c)){
+$query="SHOW FULL COLUMNS FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`";
+
+$Consulta = $Conec1->query($query);
+while($row = $Consulta->fetch_assoc()){
 	$Tabla[$row['Field']]=$row;
 };
 $Tabla['ACTcategorias']['Comment']='Menu de categorias';
@@ -467,62 +471,6 @@ $Tabla['ACTcategorias']['Type']='TablaHija';
         
 	<?php
 include('./includes/pie.php');
-	/*medicion de rendimiento lamp*/
-	$endtime = microtime(true);
-	$duration = $endtime - $starttime;
-	$duration = substr($duration,0,6);
-	echo "<br>tiempo de respuesta : " .$duration. " segundos";
+
 ?>
 </body>
-
-
-<?php /*
-<!-- este proyecto recurre al proyecto tiny_mce para las funciones de edición de texto -->
-<script type="text/javascript" src="./js/editordetexto/tiny_mce.js"></script>
-<script type="text/javascript">
-
-		tinyMCE.init({
-				
-	        // General options
-	        mode : "textareas",
-	        theme : "advanced",
-	        plugins : "autolink,lists,spellchecker,pagebreak,style,layer,table,save,advhr,advimage,advlink,emotions,iespell,inlinepopups,insertdatetime,preview,media,searchreplace,print,contextmenu,paste,directionality,fullscreen,noneditable,visualchars,nonbreaking,xhtmlxtras,template",
-	
-			forced_root_block : "",
-		    remove_linebreaks : true,
-		    remove_trailing_nbsp : true,
-		    force_br_newlines : false,
-	        force_p_newlines : true,
-		    fix_list_elements : false,
-		    remove_linebreaks : true,
-			width : "550px",
-			height : "600px",
-	
-	        // Theme options
-	        theme_advanced_buttons1 : "bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,|,formatselect,fontsizeselect|cut,copy,paste,pastetext,pasteword,|,bullist,numlist,|,link,unlink|visualchars,nonbreaking,blockquote|tablecontrols,|,removeformat,visualaid,",
-	        theme_advanced_toolbar_location : "top",
-	        theme_advanced_toolbar_align : "left",
-	        theme_advanced_statusbar_location : "bottom",
-	
-	        // Skin options
-	        skin : "o2k7",
-	        skin_variant : "silver",
-	
-	        // Example content CSS (should be your site CSS)
-	        content_css : "",
-	
-	        // Drop lists for link/image/media/template dialogs
-	        template_external_list_url : "js/template_list.js",
-	        external_link_list_url : "js/link_list.js",
-	        external_image_list_url : "js/image_list.js",
-	        media_external_list_url : "js/media_list.js",
-	
-	        // Replace values for the template plugin
-	        template_replace_values : {
-	                username : "Some User",
-	                staffid : "991234"
-	        }
-		});
-</script>
- **/ ?>
- */

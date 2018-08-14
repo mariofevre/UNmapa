@@ -59,18 +59,18 @@ if(isset($_POST['recuperar'])){
 			SELECT 
 			* 
 			FROM 
-			`usuarios` 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios` 
 			WHERE log = '".$posts['log']."'
 		";
 			 
-		$resultado = mysql_query($query,$Conec1);	
-		$devuelto=	mysql_num_rows($resultado);
+		$Consulta = $Conec1->query($query);
+		$devuelto=	$Consulta->num_rows;
 		if($devuelto==0){		
 			$ERROR['log'] = "ERROR - El nombre de usuario no se encuentra registrado.";
 		}else{
-			
-			$mailguardado=mysql_result($resultado,0,'mail');
-			$idguardado=mysql_result($resultado,0,'id');
+			$row=$Consulta->fetch_assoc();
+			$mailguardado=$row['mail'];
+			$idguardado=$row['id'];
 			if($mailcargado!=$mailguardado){
 				$ERROR['mail'] = "ERROR - La dirección de correo cargada no se corresponde con el usuario en nuestras bases.";			
 			}
@@ -86,13 +86,14 @@ if(isset($_POST['recuperar'])){
 	
 	$NPASS=cadenaArchivo(7);									
 									
-	$query = "UPDATE
-		`usuarios`
+	$query = "
+		UPDATE
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
 		SET
 			pass ='".md5($NPASS)."'
 		WHERE id='".$idguardado."'	
 	";	
-	mysql_query($query,$Conec1) or die("actualización invalida:" . mysql_error());		
+	$Consulta = $Conec1->query($query);
 				
 		$mensaje = "
 Hola ".$posts['nombre'].": \n
@@ -158,7 +159,7 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 		if(!$exito){
 			/* solucion provisoria, los mails son cargados a mysql y enviados luego desde servitrecc */		 
 		$query = "INSERT INTO
-						`SISreportesmailspendientes`
+						`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`SISreportesmailspendientes`
 					SET
 						`destinatario`='".$_POST['mail']."',
 						`asunto`='Reactivación de cuenta en SIGSAO',
@@ -166,8 +167,8 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 						`fechaenvio`='$HOY',
 						horaenvio='$AHORA'
 					";
-			mysql_query($query,$Conec1);	
-			echo mysql_error($Conec1);
+			$Consulta = $Conec1->query($query);
+			echo $Conec1->error;
 						echo"
 				<html>
 				<head>
@@ -199,11 +200,11 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 					texto ='ha fallado el envío de mail para activación del usuario ".$Nid." desde registrorecuperar.php',
 					zz_AUTOFECHACREACION ='".$HOY."'
 				";
-			mysql_query($query,$Conec1);
-			$NregID=mysql_insert_id($Conec1);	
+			$Consulta = $Conec1->query($query);
+			$NregID=$Consulta->insert_id;	
 			
 			$query = "INSERT INTO
-						`SISreportesmailspendientes`
+						`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`SISreportesmailspendientes`
 					SET
 						`destinatario`='".$_POST['mail']."',
 						`asunto`='Reactivación de cuenta en SIGSAO',
@@ -211,8 +212,8 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 						`fechaenvio`='$HOY',
 						horaenvio='$AHORA'
 					";
-			mysql_query($query,$Conec1);	
-			echo mysql_error($Conec1);
+			$Consulta = $Conec1->query($query);	
+			echo $Conec1->error;
 			
 			
 

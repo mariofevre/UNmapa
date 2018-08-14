@@ -135,22 +135,26 @@ foreach($fila as $kf => $vf){
 			`zz_AUTOFECHACREACION`='".$Hoy."',
 			`zz_activo`='1'
 		";
-		mysql_query($query,$Conec1);
-		echo mysql_error($Conec1);
-		$nid=mysql_insert_id($Conec1);
+		$Conec1->query($query);
+		
+		//mysql_query($query,$Conec1);
+		echo  $Conec1->error;
+		$nid=$Conec1->insert_id;
 		$Log['tx'][]="nuevo usuario $nid";
 		
 		if($nid>0){
 			$query="
-			INSERT INTO `UNmapa`.`ACTaccesos`
+			INSERT INTO 
+				`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
 			SET
-			`id_actividades`='$Id',
-			`id_usuarios`='$nid',
-			`nivel`='".$vf[$campos['accnivel']]."',
-			`autorizado`='1'
+				`id_actividades`='$Id',
+				`id_usuarios`='$nid',
+				`nivel`='".$vf[$campos['accnivel']]."',
+				`autorizado`='1'
 			";
-			mysql_query($query,$Conec1);
-			echo mysql_error($Conec1);
+			$Conec1->query($query);
+			//mysql_query($query,$Conec1);
+			echo  $Conec1->error;
 			$Log['tx'][]=" -- nuevo acceso para . ".$vf['cadena'];
 		}else{
 			$Log['tx'][]=" -- error en la creacion del usuario. ".$vf['cadena'];	

@@ -39,7 +39,6 @@ $Log=array();
 $Log['data']=array();
 $Log['tx']=array();
 $Log['res']='';
-
 function terminar($Log){
 	$res=json_encode($Log);
 	if($res==''){$res=print_r($Log,true);}
@@ -47,7 +46,7 @@ function terminar($Log){
 	exit;
 }
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
 $HOY=date("Y-m-d");
@@ -59,288 +58,285 @@ if(!isset($_POST['aid'])){
 }
 
 	
-	$query="
-		SELECT
-			`actividades`.`id`,
-		    `actividades`.`abierta`,
-		    `actividades`.`resumen`,
-		    `actividades`.`consigna`,
-		    `actividades`.`marco`,
-		    `actividades`.`nivel`,
-		    `actividades`.`x0`,
-		    `actividades`.`y0`,
-		    `actividades`.`xF`,
-		    `actividades`.`yF`,
-		    `actividades`.`imx0`,
-		    `actividades`.`imy0`,
-		    `actividades`.`imxF`,
-		    `actividades`.`imyF`,
-		    `actividades`.`geometria`,
-		    `actividades`.`adjuntosAct`,
-		    `actividades`.`adjuntosDat`,
-		    `actividades`.`adjuntosExt`,
-		    `actividades`.`valorAct`,
-		    `actividades`.`valorDat`,
-		    `actividades`.`valorUni`,
-		    `actividades`.`textobreveAct`,
-		    `actividades`.`textobreveDat`,
-		    `actividades`.`categAct`,
-		    `actividades`.`categDat`,
-		    `actividades`.`categLib`,
-		    `actividades`.`textoAct`,
-		    `actividades`.`textoDat`,
-		    `actividades`.`objeto`,
-		    `actividades`.`desde`,
-		    `actividades`.`hasta`,
-		    `actividades`.`resultados`,
-		    `actividades`.`zz_AUTOUSUARIOCREAC`,
-		    `actividades`.`zz_borrada`,
-		    `actividades`.`zz_AUTOFECHACREACION`,
-		    `actividades`.`zz_PUBLICO`
-		FROM 
-			`UNmapa`.`actividades`
-		WHERE 
-			id = '".$_POST['aid']."'
-	";
-	
-	$Consulta = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
-		$Log['tx'][]= $query;
-		$Log['tx'][]= 'error al consultar base';
-		terminar($log);
-	}
-	$fila=mysql_fetch_assoc($Consulta);
-	foreach($fila as $k => $v){
-		$Actividad[$k]=utf8_encode($v);
-	}
+$query="
+	SELECT
+		`actividades`.`id`,
+	    `actividades`.`abierta`,
+	    `actividades`.`resumen`,
+	    `actividades`.`consigna`,
+	    `actividades`.`marco`,
+	    `actividades`.`nivel`,
+	    `actividades`.`x0`,
+	    `actividades`.`y0`,
+	    `actividades`.`xF`,
+	    `actividades`.`yF`,
+	    `actividades`.`imx0`,
+	    `actividades`.`imy0`,
+	    `actividades`.`imxF`,
+	    `actividades`.`imyF`,
+	    `actividades`.`geometria`,
+	    `actividades`.`adjuntosAct`,
+	    `actividades`.`adjuntosDat`,
+	    `actividades`.`adjuntosExt`,
+	    `actividades`.`valorAct`,
+	    `actividades`.`valorDat`,
+	    `actividades`.`valorUni`,
+	    `actividades`.`textobreveAct`,
+	    `actividades`.`textobreveDat`,
+	    `actividades`.`categAct`,
+	    `actividades`.`categDat`,
+	    `actividades`.`categLib`,
+	    `actividades`.`textoAct`,
+	    `actividades`.`textoDat`,
+	    `actividades`.`objeto`,
+	    `actividades`.`desde`,
+	    `actividades`.`hasta`,
+	    `actividades`.`resultados`,
+	    `actividades`.`zz_AUTOUSUARIOCREAC`,
+	    `actividades`.`zz_borrada`,
+	    `actividades`.`zz_AUTOFECHACREACION`,
+	    `actividades`.`zz_PUBLICO`
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`
+	WHERE 
+		id = '".$_POST['aid']."'
+";
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
+	$Log['tx'][]= $query;
+	$Log['tx'][]= 'error al consultar base';
+	terminar($log);
+}
+$fila=$Consulta->fetch_assoc();
+foreach($fila as $k => $v){
+	$Actividad[$k]=utf8_encode($v);
+}
 
-	
-	$Log['tx'][]=$fila['desde']."-".$fila['hasta'];
-	
-	if($fila['hasta']!='0000-00-00'&&$fila['hasta']<$HOY){
-		$Actividad['estado']="terminada";
-	}elseif($fila['desde']!='0000-00-00'&&$fila['desde']>$HOY){
-		$Actividad['estado']="noinicio";
-	}else{
-		$Actividad['estado']="activa";	
-	}
 
-	if($Actividad['estado']=="activa"&&!isset($_POST['pid'])){
-		$Actividad['editor']="1";	
-	}else{
-		$Actividad['editor']="0";
-	}
-	//luego se ajusta este valor si el autor y el usuario no coinciden
-	
+$Log['tx'][]=$fila['desde']."-".$fila['hasta'];
 
+if($fila['hasta']!='0000-00-00'&&$fila['hasta']<$HOY){
+	$Actividad['estado']="terminada";
+}elseif($fila['desde']!='0000-00-00'&&$fila['desde']>$HOY){
+	$Actividad['estado']="noinicio";
+}else{
+	$Actividad['estado']="activa";	
+}
+
+if($Actividad['estado']=="activa"&&!isset($_POST['pid'])){
+	$Actividad['editor']="1";	
+}else{
+	$Actividad['editor']="0";
+}
+//luego se ajusta este valor si el autor y el usuario no coinciden
+
+
+
+$query="	
+	SELECT 
+		`ACTaccesos`.`id`,
+	    `ACTaccesos`.`id_actividades`,
+	    `ACTaccesos`.`id_usuarios`,
+	    `ACTaccesos`.`nivel`,
+	    `ACTaccesos`.`autorizado`
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
+	WHERE
+		id_actividades='".$_POST['aid']."'
+		AND
+		id_usuarios='".$UsuarioI."'
+";
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;	
+	$Log['tx'][]= $query;
+	$Log['tx'][]= 'error al consultar base';
+	terminar($log);
+}
+$Actividad['docente']='0';
+while($fila= $Consulta->fetch_assoc()){
+	$Log['tx'][]=$fila['nivel'];
+	$Log['tx'][]=$Actividad['zz_AUTOUSUARIOCREAC'];
+	$Log['tx'][]=$UsuarioI;
+	$Log['tx'][]='.';
 	
-	$query="	
-		SELECT 
-			`ACTaccesos`.`id`,
-		    `ACTaccesos`.`id_actividades`,
-		    `ACTaccesos`.`id_usuarios`,
-		    `ACTaccesos`.`nivel`,
-		    `ACTaccesos`.`autorizado`
-		FROM 
-			`UNmapa`.`ACTaccesos`
-		WHERE
-			id_actividades='".$_POST['aid']."'
-			AND
-			id_usuarios='".$usuarioI."'
-	";
-	$Consulta = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
-		$Log['tx'][]= $query;
-		$Log['tx'][]= 'error al consultar base';
-		terminar($log);
-	}
-	
-	$Actividad['docente']='0';
-	while($fila=mysql_fetch_assoc($Consulta)){
-		$Log['tx'][]=$fila['nivel'];
-		$Log['tx'][]=$Actividad['zz_AUTOUSUARIOCREAC'];
-		$Log['tx'][]=$UsuarioI;
-		$Log['tx'][]='.';
-		
-		if($fila['nivel']>=3){
-			$Actividad['docente']='1';
-		}
-	}		
-	
-	if($Actividad['zz_AUTOUSUARIOCREAC']==$UsuarioI){
+	if($fila['nivel']>=3){
 		$Actividad['docente']='1';
 	}
-	
-	$Log['data']['actividad']=$Actividad;	
-	
-	$query="	
-		SELECT `ACTcategorias`.`id`,
-	    `ACTcategorias`.`id_p_actividades_id`,
-	    `ACTcategorias`.`nombre`,
-	    `ACTcategorias`.`descripcion`,
-	    `ACTcategorias`.`orden`,
-	    `ACTcategorias`.`CO_color`,
-	    `ACTcategorias`.`zz_fusionadaa`
-	FROM 
-		`UNmapa`.`ACTcategorias`
-	WHERE
-		id_p_actividades_id = '".$_POST['aid']."'
-		AND zz_fusionadaa is null
-	ORDER BY orden
-	";
-	
-	$Consulta = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
-		$Log['tx'][]= $query;
-		$Log['tx'][]= 'error al consultar base';
-		terminar($log);
-	}
-		
-	while($fila=mysql_fetch_assoc($Consulta)){
-		unset($c);
-		
-		foreach($fila as $k => $v){
-			$c[$k]=utf8_encode($v);
-		}	
-		$Log['data']['actividad']['categorias'][$fila['id']]=$c;	
-		$Log['data']['actividad']['catOrden'][]=$fila['id'];		
-		// cambia de categoría aquellos puntos dentro de categorías que fueron colapsadas
-		if($fila['zz_fusionadaa']>0){
-			$dest=$fila['zz_fusionadaa'];
-		}else{
-			$dest=$fila['id'];
-		}		
-		$CatConversor[$fila['id']]=$dest;
-	}
-	
-	
-	if(!isset($_POST['pid'])){
-		$Log['tx'][]='no solicita punto, solo se enviaran datos de la actividad';
-		$Log['res']='exito';
-		terminar($Log);
-	}
-	
-	$query="	
-		SELECT
-			`usuarios`.`id` as uid,
-		    `usuarios`.`nombre`,
-		    `usuarios`.`apellido`,
-		    
+}	
+$Log['tx'][]='autoria: '.$Actividad['zz_AUTOUSUARIOCREAC'].' vs '.$UsuarioI;
+if($Actividad['zz_AUTOUSUARIOCREAC']==$UsuarioI){
+	$Actividad['docente']='1';
+}
 
-		    
-		    `atributos`.`id`,
-		    `atributos`.`valor`,
-		    `atributos`.`categoria`,
-		    `atributos`.`texto`,
-		    `atributos`.`textobreve`, 
-		    `atributos`.`link`,
-		    `atributos`.`id_usuarios`,
-		    `atributos`.`id_actividades`,
-		    `atributos`.`fecha`,
-		    `atributos`.`escala`,
-		    `atributos`.`nivelUsuario`,
-		    `atributos`.`areaUsuario`,
-		    
+$Log['data']['actividad']=$Actividad;	
 
-		    `geodatos`.`x`,
-		    `geodatos`.`y`,
-		    `geodatos`.`z`,
-		    `geodatos`.`zz_bloqueado`,
-		    `geodatos`.`zz_bloqueadoUsu`,
-		    `geodatos`.`zz_bloqueadoTx`,
-		    `geodatos`.`geometria`,
-		    `geodatos`.`id_usuarios`,
-		    `geodatos`.`id_actividades`,
-		    `geodatos`.`fecha`,
-		    
-		    `usuarioblock`.`nombre` as zz_bloqueadoN,
-			`usuarioblock`.`apellido` as zz_bloqueadoA
-		    
-		FROM 
-		
-			`UNmapa`.`usuarios`,
-			`UNmapa`.`usuarios` as usuarioblock,
-			`UNmapa`.`atributos`,
-			`UNmapa`.`geodatos`
-			
-		WHERE
-				geodatos.`id`='".$_POST['pid']."'
-			AND
-				`atributos`.`id`='".$_POST['pid']."'
-			AND	
-				`atributos`.`id_actividades`='".$_POST['aid']."'
-			AND
-				`usuarios`.`id`=`atributos`.`id_usuarios`
-			AND
-				(`usuarioblock`.`id`=`geodatos`.`zz_bloqueadoUsu` 
-				OR
-				 `geodatos`.`zz_bloqueadoUsu` is null)
-	";
+$query="	
+	SELECT `ACTcategorias`.`id`,
+    `ACTcategorias`.`id_p_actividades_id`,
+    `ACTcategorias`.`nombre`,
+    `ACTcategorias`.`descripcion`,
+    `ACTcategorias`.`orden`,
+    `ACTcategorias`.`CO_color`,
+    `ACTcategorias`.`zz_fusionadaa`
+FROM 
+	`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
+WHERE
+	id_p_actividades_id = '".$_POST['aid']."'
+	AND zz_fusionadaa is null
+ORDER BY orden
+";
+
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
+	$Log['tx'][]= $query;
+	$Log['tx'][]= 'error al consultar base';
+	terminar($log);
+}
 	
-
-	$Consulta = mysql_query($query,$Conec1);
-	if(mysql_error($Conec1)!=''){
-		$Log['tx'][]=mysql_error($Conec1);
-		$Log['tx'][]= $query;
-		$Log['tx'][]= 'error al consultar base';
-		terminar($log);
-	}
-	$fila=mysql_fetch_assoc($Consulta);
+while($fila= $Consulta->fetch_assoc()){
+	unset($c);
+	
 	foreach($fila as $k => $v){
-		$Punto[$k]=utf8_encode($v);
-	}
-	
-	$cat=$CatConversor[$fila['categoria']];
-	$Punto['categoria']=$cat;
-	$Punto['categoriaNom']=$Log['data']['actividad']['categorias'][$cat]['nombre'];
-	
-	$Punto['categoriaCol']=$Log['data']['actividad']['categorias'][$cat]['CO_color'];
-	if($Punto['categoriaCol']==''){
-		$Punto['categoriaCol']="rgb(80,120,250)";
-	}
-	
-	if(substr($Punto['link'],0,4)=='www.'||substr($Punto['link'],0,4)=='http'){
-		$Punto['linkTipo']='weblink';
+		$c[$k]=utf8_encode($v);
+	}	
+	$Log['data']['actividad']['categorias'][$fila['id']]=$c;	
+	$Log['data']['actividad']['catOrden'][]=$fila['id'];		
+	// cambia de categoría aquellos puntos dentro de categorías que fueron colapsadas
+	if($fila['zz_fusionadaa']>0){
+		$dest=$fila['zz_fusionadaa'];
 	}else{
-		$Punto['linkTipo']='locallink';
-	}
-	
-	$extValImg['jpg']='1';
-	$extValImg['png']='1';
-	$extValImg['tif']='1';
-	$extValImg['bmp']='1';
-	$extValImg['gif']='1';
-	$extValDown['pdf']='1';
-	$extValDown['zip']='1';		
-		
-	if(substr($Punto['link'],-4,1)=='.'){
-		$ext=substr($Punto['link'],-3);	
-		
-		
-		if(isset($extValImg[strtolower($ext)])){
-			$Punto['linkForm']='imagen';		
-		}elseif(isset($extValDown[strtolower($ext)])){
-			$Punto['linkForm']='archivo';										
-		}else{
-			$Punto['linkForm']='desconocido';
-		}
-	}
-	
-	if($Log['data']['actividad']['estado']=="activa"&&$Punto['id_usuarios']==$UsuarioI){
-		$Log['data']['actividad']['editor']="1";	
-	}else{
-		$Log['data']['actividad']['editor']="0";
-	}
-	
-	
-	
-	$Log['data']['punto']=$Punto;
+		$dest=$fila['id'];
+	}		
+	$CatConversor[$fila['id']]=$dest;
+}
+
+
+if(!isset($_POST['pid'])){
+	$Log['tx'][]='no solicita punto, solo se enviaran datos de la actividad';
 	$Log['res']='exito';
-	
 	terminar($Log);
+}
+
+$query="	
+	SELECT
+		`usuarios`.`id` as uid,
+	    `usuarios`.`nombre`,
+	    `usuarios`.`apellido`,
+	    
+	    `atributos`.`id`,
+	    `atributos`.`valor`,
+	    `atributos`.`categoria`,
+	    `atributos`.`texto`,
+	    `atributos`.`textobreve`, 
+	    `atributos`.`link`,
+	    `atributos`.`id_usuarios`,
+	    `atributos`.`id_actividades`,
+	    `atributos`.`fecha`,
+	    `atributos`.`escala`,
+	    `atributos`.`nivelUsuario`,
+	    `atributos`.`areaUsuario`,	    
+
+	    `geodatos`.`x`,
+	    `geodatos`.`y`,
+	    `geodatos`.`z`,
+	    `geodatos`.`zz_bloqueado`,
+	    `geodatos`.`zz_bloqueadoUsu`,
+	    `geodatos`.`zz_bloqueadoTx`,
+	    `geodatos`.`geometria`,
+	    `geodatos`.`id_usuarios`,
+	    `geodatos`.`id_actividades`,
+	    `geodatos`.`fecha`,
+	    
+	    `usuarioblock`.`nombre` as zz_bloqueadoN,
+		`usuarioblock`.`apellido` as zz_bloqueadoA
+	    
+	FROM 
+	
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`,
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios` as usuarioblock,
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`atributos`,
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`
+		
+	WHERE
+			geodatos.`id`='".$_POST['pid']."'
+		AND
+			`atributos`.`id`='".$_POST['pid']."'
+		AND	
+			`atributos`.`id_actividades`='".$_POST['aid']."'
+		AND
+			`usuarios`.`id`=`atributos`.`id_usuarios`
+		AND
+			(`usuarioblock`.`id`=`geodatos`.`zz_bloqueadoUsu` 
+			OR
+			 `geodatos`.`zz_bloqueadoUsu` is null)
+";
+
+
+$Consulta = $Conec1->query($query);
+if($Conec1->error!=''){
+	$Log['tx'][]=$Conec1->error;
+	$Log['tx'][]= $query;
+	$Log['tx'][]= 'error al consultar base';
+	terminar($log);
+}
+$fila=$Consulta->fetch_assoc();
+foreach($fila as $k => $v){
+	$Punto[$k]=utf8_encode($v);
+}
+
+$cat=$CatConversor[$fila['categoria']];
+$Punto['categoria']=$cat;
+$Punto['categoriaNom']=$Log['data']['actividad']['categorias'][$cat]['nombre'];
+
+$Punto['categoriaCol']=$Log['data']['actividad']['categorias'][$cat]['CO_color'];
+if($Punto['categoriaCol']==''){
+	$Punto['categoriaCol']="rgb(80,120,250)";
+}
+
+if(substr($Punto['link'],0,4)=='www.'||substr($Punto['link'],0,4)=='http'){
+	$Punto['linkTipo']='weblink';
+}else{
+	$Punto['linkTipo']='locallink';
+}
+
+
+$extValImg['jpg']='1';
+$extValImg['png']='1';
+$extValImg['tif']='1';
+$extValImg['bmp']='1';
+$extValImg['gif']='1';
+$extValDown['pdf']='1';
+$extValDown['zip']='1';		
+	
+	
+	
+if(substr($Punto['link'],-4,1)=='.'){
+	$ext=substr($Punto['link'],-3);	
+	
+	if(isset($extValImg[strtolower($ext)])){
+		$Punto['linkForm']='imagen';		
+	}elseif(isset($extValDown[strtolower($ext)])){
+		$Punto['linkForm']='archivo';										
+	}else{
+		$Punto['linkForm']='desconocido';
+	}
+}
+
+
+if($Log['data']['actividad']['estado']=="activa"&&$Punto['id_usuarios']==$UsuarioI){
+	$Log['data']['actividad']['editor']="1";	
+}else{
+	$Log['data']['actividad']['editor']="0";
+}
+
+
+$Log['data']['punto']=$Punto;
+$Log['res']='exito';
+
+terminar($Log);
 
 
 ?>

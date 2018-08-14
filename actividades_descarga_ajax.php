@@ -34,7 +34,7 @@ include('./includes/conexion.php');
 include('./includes/conexionusuario.php');
 include_once('./includes/cadenas.php');
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
 

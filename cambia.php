@@ -1,4 +1,5 @@
 <?php
+// eliminar esta funcion solo se utiliza para modificar categorías, pero es muy insegura
 /**
 * cambia.php
 *
@@ -25,17 +26,17 @@
 * Si usted no cuenta con una copia de dicha licencia puede encontrarla aquí: <http://www.gnu.org/licenses/>.
 */
 
+	ini_set('display_errors','true');
 
-	/* verificación de seguridad */
+	// verificación de seguridad 
 	include('./includes/conexion.php');
 	include('./includes/conexionusuario.php');
 	
-	/* funciones frecuentes */
+	// funciones frecuentes 
 	include("./includes/fechas.php");
 	include("./includes/cadenas.php");
 	
-	$UsuarioI = $_SESSION['USUARIOID'];
-	
+	$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 	if($UsuarioI==""){header('Location: ./login.php');}
 
 
@@ -83,10 +84,15 @@
 
 	
 	print_r($_POST);
-	$Consulta = mysql_query("SELECT * FROM $Tabla WHERE id='$Id'",$Conec1);	
- 	$result = mysql_query('SHOW FULL COLUMNS FROM `'.$Tabla.'`',$Conec1);
+	$query="SELECT * FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$Tabla WHERE id='$Id'";
+	$Consulta = $Conec1->query($query);
 	
-	$panelconsultado=mysql_result($Consulta,0,'zz_AUTOPANEL');
+	$query="SHOW FULL COLUMNS FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`".$Tabla."`";
+	$result = $Conec1->query($query);
+	
+	$row= $Consulta->fetch_assoc();
+	
+	$panelconsultado=$row['zz_AUTOPANEL'];
 	
 	if($panelconsultado!='-1'&&$panelconsultado!=''&&$panelconsultado!=$PanelI){
 		header('Location: ./mensaje.php?msj=Error en el acceso al Panel Activo. ref:'.$panelconsultado.' tabla: '.$Tabla);
@@ -94,8 +100,8 @@
 		
 		//print_r($_POST);
 		
-	    if (mysql_num_rows($result) > 0) {				    	
-	        while ($row = mysql_fetch_assoc($result)) {
+	    if ($result->num_rows > 0) {				    	
+	        while ($row = $result->fetch_assoc()) {
 	        	$campo = $row['Field'];
 	        	$datomas = $_POST[$campo];
 				$Typo = substr($row['Field'],0,3);			
@@ -104,71 +110,10 @@
 				/* para tablas padre */
 				if($Typolink == "id_p"){
 					$_SESSION['DEBUG']['mensajes'][] = "padre en: ".$campo. "->".$datomas;
-					if($datomas == "n"){
-						$_SESSION['DEBUG']['mensajes'][] = "nuevo item";
-						$extraset='';
-						$Baselink = substr($row['Field'],0,7);
-						if($Baselink != "id_p_B_"){
-							$_SESSION['DEBUG']['mensajes'][] = "padre interno";
-							$o = explode("_", $row['Field']);
-							$basepadre = $Base;
-							$tablapadre = $o[2];
-							$_SESSION['DEBUG']['mensajes'][] = "padre: ".$tablapadre;
-							$campopadre = $o[4];
-							if($campopadre==''){
-								$_SESSION['DEBUG']['mensajes'][] = "campo padre: indefinido, explorando...";
-								$padre = mysql_query('SHOW FULL COLUMNS FROM `'.$tablapadre.'`',$Conec1);
-								$seteado='no';
-								While($rp= mysql_fetch_assoc($padre)){
-									if($seteado=='no'&&$rp['Field']!='id'){
-										$seteado='si';
-										$campopadre = $rp['Field'];
-									}
-								}
-								$_SESSION['DEBUG']['mensajes'][] = "campo asignado: $campopadre";
-							}
-							
-							$extra = "";
-							if($o[5]=='tipoa'){$extra = ", tipo = 'a'";}
-							elseif($o[5]=='tipob'){$extra = ", tipo = 'b'";}
-							elseif($o[5]=='tipo'){$extra.=", ".$o[5]."='".$o[6]."'";}
-							$padre = $basepadre . "." . $tablapadre;
-							$campocont = $campo."_n";
-							$nuevocontenido=$_POST[$campocont];
-							
-							
-							//Verifica no repetición en el nombre para tablas espe´cificas, ej: grupos
-							$query="	
-								SELECT 
-									* 
-								FROM
-									 $tablapadre
-									 WHERE $campopadre='$nuevocontenido'
-							";
-							$existe=mysql_query($query,$Conec1);
-							$_SESSION['DEBUG']['mensajes'][] = mysql_error($Conec1);
-							if(mysql_num_rows($existe)>0){
-								$_SESSION['DEBUG']['mensajes'][] = "<br>nombre de item existente, creación anulada";
-								$_SESSION['DEBUG']['mensajes'][] = $query;
-								$Idnuevo=mysql_result($existe,0,'id');
-								$_SESSION['DEBUG']['mensajes'][] = "<br>id reciclado: ".$Idnuevo;
-								$datomas = $Idnuevo;
-							}else{						
-								$query = "INSERT INTO $tablapadre SET $campopadre='$nuevocontenido'";
-								mysql_query($query,$Conec1);
-								$_SESSION['DEBUG']['mensajes'][] = mysql_error($Conec1);
-								$_SESSION['DEBUG']['mensajes'][] = $query;
-								$Idnuevo = mysql_insert_id($Conec1);
-								$_SESSION['DEBUG']['mensajes'][] = "nuevo id: ".$Idnuevo;
-								$datomas = $Idnuevo;
-								$_SESSION['DEBUG']['mensajes'][] = "agregará: ".$datomas;
-							}
-						}
-					}
 					$_SESSION['DEBUG']['mensajes'][] = "<br>otro;". " - " . $row['Field']. " - " . $datomas."<br>";
-						if($datomas != ""){
+					if($datomas != ""){
 						$Datos .= " `" . $campo . "`='" .  $datomas . "',";
-						}
+					}
 				}elseif($Typo == 'FI_'){
 					
 					$_SESSION['DEBUG']['mensajes'][] = "Dectectado campo de fichero (FI_), se guardaran los archivos enviados:<br>";
@@ -296,11 +241,11 @@
 		$_SESSION['DEBUG']['mensajes'][] = "<div>".$Datos."</div>";
 		
 			
-		$query="UPDATE $Tabla SET $Datos WHERE id='$Id'";
+		$query="UPDATE `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$Tabla SET $Datos WHERE id='$Id'";
 		echo $query;
-		
-		mysql_query($query,$Conec1);
-		$_SESSION['DEBUG']['mensajes'][] = mysql_error($Conec1);
+		$Consulta = $Conec1->query($query);
+
+		$_SESSION['DEBUG']['mensajes'][] = $Conec1->error;
 		
 	
 		$_SESSION['DEBUG']['mensajes'][] = $Salida;

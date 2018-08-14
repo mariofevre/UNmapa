@@ -75,7 +75,7 @@ if(isset($_FILES['archivo_F'])){
 		$Publicacion .= "archivo guardado";
 		$query="
 			UPDATE 
-				$Tabla
+				`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.$Tabla
 			SET
 				FI_documento = '$pathI',
 				FI_nombreorig = '$imagenid'
@@ -96,7 +96,6 @@ if(isset($_FILES['archivo_F'])){
 }
 
 
-$Publicacion .= "error mysql: ". mysql_error($_SESSION['panelcontrol']->Conec1);
 
 /*
 echo "

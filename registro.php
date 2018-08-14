@@ -26,7 +26,8 @@
 */
 
 
-header('Content-Type:text/html; charset=cp-1252');
+//header('Content-Type:text/html; charset=cp-1252');
+ini_set('display_errors', 1);
 include('./includes/conexion.php');
 include("./includes/fechas.php");
 include("./includes/cadenas.php");
@@ -35,37 +36,73 @@ include("./includes/class.phpmailer.php");
 $HOY = date("Y-m-d");
 $AHORA = date("H:i");
 $ERROR = array();
-	
+
+$mensaje='';	
+
+if(!isset($_GET['DEST'])){$_GET['DEST']='';}
 $posts['DEST']=$_GET['DEST'];
+
+if(!isset($_GET['actividad'])){$_GET['actividad']='';}
 $posts['actividad']=$_GET['actividad'];
-				 
+			 
+foreach($_POST as $key => $value) {
+	$valor = trim(htmlentities(strip_tags($value)));
+	$posts[$key]=$nombre=html_entity_decode($valor);
+}
+
+if(!isset($posts['nombre'])){$posts['nombre']='';}				
+if(!isset($posts['apellido'])){$posts['apellido']='';}	
+if(!isset($posts['nacimiento_d'])){$posts['nacimiento_d']='';}
+if(!isset($posts['nacimiento_m'])){$posts['nacimiento_m']='';}
+if(!isset($posts['nacimiento_a'])){$posts['nacimiento_a']='';}
+if(!isset($posts['mail'])){$posts['mail']='';}
+if(!isset($posts['telefono'])){$posts['telefono']='';}	
+if(!isset($posts['log'])){$posts['log']='';}	
+if(!isset($posts['pass'])){$posts['pass']='';}	
+if(!isset($posts['acepto1'])){$posts['acepto1']='';}	
+if(!isset($posts['acepto2'])){$posts['acepto2']='';}	
+if(!isset($posts['organizacion '])){$posts['organizacion']='';}	
+if(!isset($posts['nivel '])){$posts['nivel']='';}	
+	
+$ERROR['nombre']='';
+$ERROR['apellido'] ='';
+$ERROR['nacimiento']='';
+$ERROR['mail'] = "";
+$ERROR['telefono'] ='';
+$ERROR['log'] = '';
+$ERROR['acepto1'] = '';
+$ERROR['acepto2'] = '';
+$ERROR['pass'] ='';
+
+
 if(isset($_POST['registrar'])){
 	
-	foreach($_POST as $key => $value) {
-		$valor = trim(htmlentities(strip_tags($value)));
-		$posts[$key]=$nombre=html_entity_decode($valor);
-	}
-
-	$ipusuario = $_SERVER['REMOTE_ADDR'];	
+	$ipusuario = $_SERVER['REMOTE_ADDR'];
+	
 	if($posts['nombre']=='' || strlen($posts['nombre']) < 3 || !nombrevalido($posts['nombre'])){
 		$ERROR['nombre'] = "ERROR - Nombre invalido. Por favor ingrese su/sus Nombre/s real/es de al menos 3 letras.".$posts['nombre'];
 	}
-			
+
 	if($posts['apellido']=='' || strlen($posts['apellido']) < 3 || !nombrevalido($posts['apellido']))
 		{$ERROR['apellido'] = "ERROR - Apellido invalido. Por favor ingrese un Apellido real de al menos 3 letras.";}	
-	
-	if($posts['nacimiento_d']=='' || $posts['nacimiento_d']=='0'|| $posts['nacimiento_m']=='' || $posts['nacimiento_m']=='0'||  $posts['nacimiento_a']=='' ||$posts['nacimiento_a']=='0')
-		{$ERROR['nacimiento'] = "ERROR - Su fecha de nacimeinto no fue cargada correctamente.";}	
-		
+
+	if(
+		$posts['nacimiento_d']=='' || $posts['nacimiento_d']=='0'|| 
+		$posts['nacimiento_m']=='' || $posts['nacimiento_m']=='0'||  
+		$posts['nacimiento_a']=='' ||$posts['nacimiento_a']=='0'
+	){
+		$ERROR['nacimiento'] = "ERROR - Su fecha de nacimeinto no fue cargada correctamente.";
+	}	
 	if(mailvalido($posts['mail']==''))
 		{$ERROR['mail'] = "ERROR - Dirección de correo electrónico inválida.";}
+	
 		
 	if($posts['telefono']=='' || !telvalido($posts['telefono']))
 		{$ERROR['telefono'] = "ERROR - El número de teléfono cargado no es válido.";}			
 		
-	if(!logvalido($posts['log']))
+	if(!logvalido($posts['log'])){
 		{$ERROR['log'] = "ERROR - Nombre de Usuario inválido. Ingrese un Usuario con 5 caracteres o más de la A la Z, puede contaner números";}
-	else{
+	}else{
 		$query="
 			SELECT 
 			* 
@@ -74,8 +111,8 @@ if(isset($_POST['registrar'])){
 			WHERE BINARY log = '".$posts['log']."'
 		";
 		//echo $query;
-		$resultado = mysql_query($query,$Conec1);		
-		if(mysql_num_rows($resultado)>0){
+		$Consulta = $Conec1->query($query);	
+		if($Consulta->num_rows>0){
 			$ERROR['log'] = "ERROR - El nombre de usuario fué registrado previamente.";			
 		}
 	}
@@ -90,10 +127,14 @@ if(isset($_POST['registrar'])){
 	if($posts['acepto2']!='si')
 		{$ERROR['acepto2'] = "ERROR - Debe aceptar este item para poder ingresar.";}	
 	
-	if(empty($ERROR)) {
+	$ok='si';
+	foreach($ERROR as $k => $v){
+		if($v!=''){$ok='no';}
+	}
+	if($ok='si') {
 		
 		$query = "INSERT INTO
-			`usuarios`
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
 			SET
 				nombre ='".$_POST['nombre']."',
 				apellido ='".$_POST['apellido']."',
@@ -107,21 +148,23 @@ if(isset($_POST['registrar'])){
 				zz_AUTOFECHACREACION = '".$HOY."',
 				zz_activo='1'	
 			";
-		mysql_query($query,$Conec1) or die("Creacion invalida:" . mysql_error());
-		$Nid = mysql_insert_id($Conec1);
+		$Consulta = $Conec1->query($query);	
+		echo $Conec1->error;
+		//echo $query;
+		//print_r($Consulta);
+		$Nid = $Conec1->insert_id;
 		if($Nid!=''){
 		$activacion=md5($Nid."id".rand(1,1000));
 		
 		$query = "UPDATE
-				`usuarios`
+				`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
 				SET
 					zz_idactivacion ='".$activacion."'
 				WHERE id='".$Nid."'
 				";					
-			mysql_query($query,$Conec1) or die("Creacion invalida:" . mysql_error());					
-				
-			
-			$mensaje = "
+			$Consulta = $Conec1->query($query);
+
+			$mensaje .= "
 Hola ".$posts['nombre'].": \n
 Gracias por registrarse con nosotros. Aqui tiene los detalles de su cuenta de acceso...\n
 				
@@ -131,7 +174,7 @@ Contraseña: ".$posts['pass']." \n
 			
 			$mensaje .= "
 Código de activación\n
-http://190.111.246.33/UNmapa/registroactivar.php?user=".$activacion."\n
+http://190.111.246.33/MAPAUBA/registroactivar.php?user=".$activacion."\n
 				"; 
 			
 			$mensaje .= "
@@ -178,11 +221,11 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 			}
 			*/
 		
-		
+		$exito=false;
 		if(!$exito){
 		// solucion provisoria, los mails son cargados a mysql y enviados luego desde servitrecc 		 
 		$query = "INSERT INTO
-						`SISreportesmailspendientes`
+						`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`SISreportesmailspendientes`
 					SET
 						`destinatario`='".$_POST['mail']."',
 						`asunto`='registro de cuenta en SIGSAO',
@@ -190,8 +233,9 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 						`fechaenvio`='$HOY',
 						horaenvio='$AHORA'
 					";
-			mysql_query($query,$Conec1);	
-			echo mysql_error($Conec1);
+			$Consulta = $Conec1->query($query);
+
+			echo $Conec1->error;
 						echo"
 				<html>
 				<head>
@@ -227,7 +271,8 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 		    ';
 			exit();
 		}
-			
+		
+		
 		
 			if(!$exito){
 				$query = "INSERT INTO
@@ -236,8 +281,8 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 						texto ='ha fallado el envío de mail para activación del usuario ".$Nid." desde registro.php',
 						zz_AUTOFECHACREACION ='".$HOY."'
 					";
-				mysql_query($query,$Conec1);
-				$NregID=mysql_insert_id($Conec1);
+				$Consulta = $Conec1->query($query);
+				$NregID=$Consulta->insert_id;
 				
 				$query = "INSERT INTO
 							`SISreportesmailspendientes`
@@ -247,7 +292,7 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 							`cuerpo`='$mensaje',
 							`fecha de envío`='$HOY'
 						";
-				mysql_query($query,$Conec1);	
+				$Consulta = $Conec1->query($query);
 				
 				echo "Problemas enviando correo electrónico a ".$_POST['mail'];
 				echo "<br/>Enviando mensaje al administrador con número de reclamo: ".$NregID.". Vuelva a intentarlo más tarde<br>";				
@@ -288,8 +333,7 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 	}
 }
 
-?>
-
+?><!DOCTYPE html>
 <html>
 <head>
 	<title>UNmapa - Registro de Usuarios</title>
@@ -346,7 +390,7 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 			<label for="edad">Fecha de Nacimiento *<span>Ingrese su fecha de Nacimientoedad</span></label>
 			<?php
 					echo "<div class='dia'>";
-						echo "<select class='dia' name='nacimiento_d' class='required'>";
+						echo "<select class='dia required'' name='nacimiento_d'>";
 						$a=0;
 						$dd=$posts['nacimiento_d'];
 						while($a<=31){
@@ -358,7 +402,7 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 					echo "</div>";	
 					
 					echo "<div class='mes'>";
-						echo "<select class='dia' name='nacimiento_m' class='required'>";
+						echo "<select class='dia required' name='nacimiento_m'>";
 						$a=0;
 						$dm=$posts['nacimiento_m'];
 						while($a<=12){
@@ -406,7 +450,7 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 			
 			<div>
 			<label for="pass">Pass *<span>Ingrese su contraseña</span></label>
-			<input name="pass" type="password" class="required" value""/>
+			<input name="pass" type="password" class="required" value=""/>
 			<span class="error"><?php echo $ERROR['pass'];?></span>
 			</div>	
 
@@ -436,7 +480,7 @@ ESTA ES UNA RESPUESTA AUTOMATICA.
 
 	</div></div>
 	<?php
-	include('./includes/pie.php');
+	include('./_serverconfig/pie.php');
 	?>
 </body>
 </html>

@@ -37,7 +37,7 @@ include("./includes/cadenas.php");
 
 //include("./includes/BASEconsultas.php");
 
-$UsuarioI = $_SESSION['USUARIOID'];
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
 
 $FILTRO=isset($_GET['filtro'])?$_GET['filtro']:'';
@@ -51,9 +51,7 @@ $HOY=date("Y-m-d");
 	<?php 	include("./includes/meta.php");	?>
 	
 	<link rel="stylesheet" type="text/css" href="./js/ol4.2/ol.css">
-	
-	<link href="css/UNmapa.css" rel="stylesheet" type="text/css">	
-	
+	<link rel="stylesheet" type="text/css" href="css/UNmapa.css" >
 	<link rel="stylesheet" type="text/css" href="./css/Mapa.css">
 	 <style type='text/css'>
 
@@ -61,8 +59,9 @@ $HOY=date("Y-m-d");
 	 
 </head>	
 <body>
-	<script src="./js/jquery-ui-1.11.4.custom/external/jquery/jquery.js"></script>
-	<script src="./js/ol4.2/ol.js"></script>		
+	
+	<script  type="text/javascript" src="./js/jquery/jquery-1.12.0.min.js"></script>
+	<script  type="text/javascript" src="./js/ol4.2/ol-debug.js"></script>		
 
 	
 	<div id="divMapa"></div>
@@ -72,7 +71,7 @@ $HOY=date("Y-m-d");
 	</div>
 		
 <?php 
-
+	if(!isset($Registro)){$Registro=0;}
 	if($Registro==0){
 		echo "<div id='auxmapa' class='marcar'>Marque un nuevo punto en el mapa</div>";
 	}else{
@@ -94,18 +93,23 @@ $HOY=date("Y-m-d");
 	if($ActividadId==''){
 		//header('location: ./actividades.php');	//si no hay una actividad definida esta página no debería consultarse
 		echo "ERROR de Acceso 1";
-		break;
+		exit;
 	}
 	
+	if(!isset($_GET['rid'])){$_GET['rid']='0';}
 	if($_GET['rid']>0){
 		$Registro=$_GET['rid'];
 	}
 	
+	if(!isset($_GET['filtrosi'])){$_GET['filtrosi']=array();}	
+	$filtrosi=array();
 	foreach($_GET['filtrosi'] as $fdat){		
 		$e=explode("__",$fdat);
 		$a[$e[0]]=$e[1];
 		$filtrosi[]=$a;	
 	}
+	if(!isset($_GET['filtrose'])){$_GET['filtrose']=array();}
+	$filtrose=array();		
 	foreach($_GET['filtrose'] as $fdat){		
 		$e=explode("__",$fdat);
 		$a[$e[0]]=$e[1];
@@ -177,8 +181,8 @@ $HOY=date("Y-m-d");
 	function activar(_this){
 		
 		_id=_this.getAttribute('rid');		
-		this.className='seleccionado';
-		
+		_this.className='seleccionado';
+		_stat='cargando';
 		_features=_source.getFeatures();
 		for (i = 0; i < _features.length; i++) {
 		   
@@ -189,38 +193,74 @@ $HOY=date("Y-m-d");
 				//alert('hola');
 								
 				_sResalt.addFeatures([ _clon ]);
-				//_source.removeFeature(_features[i]);
-				    	
+				//_source.removeFeature(_features[i]); 
+				   	
 		    }
 		}
+
+	        
+		if(_this.querySelector('#desarrollo')!=undefined){
+			_pp=_this.querySelector('#desarrollo');
+			_this.removeChild(_pp);
+		}
+		if(_this.querySelector('#imagen')!=undefined){
+			_pp=_this.querySelector('#imagen');
+			_this.removeChild(_pp);   
+		}
+        
+		_pp=document.createElement('p');
+		_pp.innerHTML=_this.title;
+		_pp.setAttribute('id','desarrollo');
+		_this.appendChild(_pp);
+
+		if(_this.getAttribute('img')!=undefined){
+			_pp=document.createElement('img');						
+			_pp.setAttribute('src',_this.getAttribute('img'));
+			_pp.setAttribute('id','imagen');
+			_this.appendChild(_pp);
+		}
+			
 	}
 	
 	//desmarca seleccionado el punto de la capa vectorLayer
 	function desactivar(_this){
 		
 		_id=_this.getAttribute('rid');		
-		this.className='';
+		_this.className='';
 		
 		_features=_sResalt.getFeatures();
-		for (i = 0; i < _features.length; i++) {		   
+		for (i = 0; i < _features.length; i++) {
+			_this.className='';		   
 		    if(_features[i].getProperties().id==_id){
 		    	 //console.log(_features[i].getProperties().id+" vs "+_id);
-				_sResalt.removeFeature(_features[i])				    	
+				_sResalt.removeFeature(_features[i]);	
+				if(_this.querySelector('#desarrollo')!=undefined){
+					_pp=_this.querySelector('#desarrollo');
+					_this.removeChild(_pp);
+				}
+				if(_this.querySelector('#imagen')!=undefined){
+					_pp=_this.querySelector('#imagen');
+					_this.removeChild(_pp);   
+				}
 		    }
 		}		
+		
+		
 	}
 	
 	//marca seleccionado el punto de la capa baseLayer	
 	function activarB(_id){		
 		//alert('hola');
-		for (i = 0; i < _source.getFeatures.length; i++) {
-		    
-		    if(baseLayer.features[i]!=undefined){
-			    if(baseLayer.features[i]['attributes']['id']==_id){
-			    	_clon = baseLayer.features[i].clone();
+		resaltadoLayer.getSource().clear();
+		  	
+		for (i = 0; i < baseLayer.getSource().getFeatures().length; i++) {
+			parent.document.querySelector('#puntosdebase > li#P_'+baseLayer.getSource().getFeatures()[i].getProperties().id).removeAttribute('class');
+		    if(baseLayer.getSource().getFeatures()[i]!=undefined){
+			    if(baseLayer.getSource().getFeatures()[i].getProperties().id==_id){
+			    	_clon = baseLayer.getSource().getFeatures()[i].clone();
 					// 'Paste' feature into Layer 1				
-					resaltadoLayer.addFeatures([ _clon ]);	
-					baseLayer.features[i].destroy();    	
+					resaltadoLayer.getSource().addFeature( _clon);	
+					parent.document.querySelector('#puntosdebase > li#P_'+_id).setAttribute('class','seleccionado');  	
 			    }
 		    }
 		}
@@ -228,13 +268,12 @@ $HOY=date("Y-m-d");
 	
 	//desmarca seleccionado el punto de la capa baseLayer		
 	function desactivarB(_id){
-		for (i = 0; i < resaltadoLayer.features.length; i++) {		    
-		    if(resaltadoLayer.features[i]['attributes']['id']==_id){
-		    	_clon = resaltadoLayer.features[i].clone();
-				// 'Paste' feature into Layer 1
-							
-				baseLayer.addFeatures([ _clon ]);	
-				resaltadoLayer.removeAllFeatures();	    	
+		for (i = 0; i < resaltadoLayer.getSource().getFeatures().length; i++) {		    
+		    if(resaltadoLayer.getSource().getFeatures()[i].getProperties().id==_id){
+		    	_clon = resaltadoLayer.getSource().getFeatures()[i].clone();
+				// 'Paste' feature into Layer 1		
+				baseLayer.getSource().addFeature(_clon);	
+				resaltadoLayer.getSource().clear();	    	
 		    }
 		}
 	}	
@@ -294,8 +333,14 @@ $HOY=date("Y-m-d");
     var styleMapResalt = new ol.style.Style({
 	     image:cRes
     });
-    
-    
+	var cResBase = new ol.style.Circle({
+	    radius: 3,
+	    fill: _yFill,
+	    stroke: new ol.style.Stroke({color : 'rgba(0,100,255,0.8)',width : 1,})
+	});
+    var styleMapResaltBase = new ol.style.Style({
+	     image:cResBase
+    });
     
     var styleDef = new ol.style.Style({
 	     image:	new ol.style.Circle({
@@ -304,6 +349,14 @@ $HOY=date("Y-m-d");
 				    stroke: _yStroke
 				})
     });
+    
+    var styleBase = new ol.style.Style({
+	     image:	new ol.style.Circle({
+			    radius: 2,
+			    fill:  new ol.style.Fill({color: 'rgb(0,0,0)'})
+			})
+    });
+
 
     var styleArea = new ol.style.Style({
 	    stroke: new ol.style.Stroke({color : 'rgba(255,50,100,0.8)', width : 1}) 
@@ -335,6 +388,10 @@ $HOY=date("Y-m-d");
       projection: 'EPSG:4326'      
     }); 
 
+	var _sourceBase = new ol.source.Vector({          
+      projection: 'EPSG:4326'
+    }); 
+    
 	var _sBloqueado = new ol.source.Vector({        
       projection: 'EPSG:4326'      
     }); 
@@ -362,6 +419,7 @@ $HOY=date("Y-m-d");
     	_features = _source.getFeatures();
     	    	
     	for(_nn in _features){
+    			
     		if(_features[_nn].getProperties().sel=='si'){
     			_features[_nn].getProperties().sel='no'
     			
@@ -383,8 +441,7 @@ $HOY=date("Y-m-d");
 				   image:circle
 				});
 				
-		     	_features[_nn].setStyle(sy);	     	
-		     	
+		     	_features[_nn].setStyle(sy); 	
     		}
     	}
     	
@@ -399,47 +456,63 @@ $HOY=date("Y-m-d");
         var feature = mapa.forEachFeatureAtPixel(pixel, function(feature, layer){
 	        if(layer.get('name')=='vectorLayer'){
 	          return feature;
-	         }
+	        }
         });
         
-        if(feature==undefined){return;}
-        //console.log(feature.getProperties());
+        var featureBase = mapa.forEachFeatureAtPixel(pixel, function(feature, layer){
+        	//console.log(layer.get('name'));
+	        if(layer.get('name')=='base general'){
+	          return feature;
+	        }
+        });
         
-		escrolear('P_'+feature.getProperties().id);
-         
-		feature.setProperties({sel:'si'});
-		feature.setStyle(styleMapResalt);
-
-		parent.document.getElementById('P_'+feature.getProperties().id).className='seleccionado';
-       
-       	_sel=parent.document.getElementById('P_'+feature.getProperties().id);
-       	_sel.className='seleccionado';
-        
-		if(_sel.querySelector('#desarrollo')!=undefined){
-			_pp=_sel.querySelector('#desarrollo');
-			_sel.removeChild(_pp);
-		}
-		if(_sel.querySelector('#imagen')!=undefined){
-			_pp=_sel.querySelector('#imagen');
-			_sel.removeChild(_pp);   
-		}
-        
-		_pp=document.createElement('p');
-		_pp.innerHTML=_sel.title;
-		_pp.setAttribute('id','desarrollo');
-		_sel.appendChild(_pp);
-
-		if(_sel.getAttribute('img')!=undefined){
-			_pp=document.createElement('img');						
-			_pp.setAttribute('src',_sel.getAttribute('img'));
-			_pp.setAttribute('id','imagen');
+        if(feature!=undefined){
+	        //console.log(feature.getProperties());
+	        
+			escrolear('P_'+feature.getProperties().id);
+	         
+			feature.setProperties({sel:'si'});
+			feature.setStyle(styleMapResalt);
+	
+			parent.document.getElementById('P_'+feature.getProperties().id).className='seleccionado';
+	       
+	       	_sel=parent.document.getElementById('P_'+feature.getProperties().id);
+	       	_sel.className='seleccionado';
+	        
+			if(_sel.querySelector('#desarrollo')!=undefined){
+				_pp=_sel.querySelector('#desarrollo');
+				_sel.removeChild(_pp);
+			}
+			if(_sel.querySelector('#imagen')!=undefined){
+				_pp=_sel.querySelector('#imagen');
+				_sel.removeChild(_pp);   
+			}
+	        
+			_pp=document.createElement('p');
+			_pp.innerHTML=_sel.title;
+			_pp.setAttribute('id','desarrollo');
 			_sel.appendChild(_pp);
+	
+			if(_sel.getAttribute('img')!='undefined'&&_sel.getAttribute('img')!=undefined){
+				_pp=document.createElement('img');					
+				_pp.setAttribute('src',_sel.getAttribute('img'));
+				_pp.setAttribute('id','imagen');
+				_sel.appendChild(_pp);
+			}
 		}
+		
+                
+        if(featureBase!=undefined){
+        	activarB(featureBase.getProperties().id);   	
+        }else{
+       
+        }
     }
  
 	var _cargado='no';
 	
 	var listenerKey = _source.on('change', function(e){	
+		
 		if(_cargado=='si'){return;}
 		if (_source.getState() == 'ready') {
 		  	
@@ -453,7 +526,7 @@ $HOY=date("Y-m-d");
 		    _features=_source.getFeatures();	    
 		    
 		    for(_nn in _features){
-
+				
 				_rell=_features[_nn].getProperties().style.color;
 				if(_features[_nn].getProperties().categDat==''){_rell='rgb(255,255,255)';console.log('si')}
 				
@@ -483,7 +556,22 @@ $HOY=date("Y-m-d");
 			     	_clonef.setStyle(sX);
 		     	}
 		     	 	
-		     	
+
+				if(
+					_features[_nn].getProperties().xPsMerc==''
+					||
+					_features[_nn].getProperties().yPsMerc==''
+				){
+					id=_features[_nn].getProperties().id;
+					_coo=_features[_nn].getGeometry().getCoordinates();
+					xPsMerc=_coo[0];
+					yPsMerc=_coo[1];
+					actualizarCoorPsMerc(
+						id,
+						xPsMerc,
+						yPsMerc
+					)
+				}
 		     	//genera un registro de cada punto en el listado activos
 		     	
 		     	var _li = parent.document.createElement('li');
@@ -496,7 +584,7 @@ $HOY=date("Y-m-d");
 				
 				_li.setAttribute('onmouseOver','document.getElementById("mapa").contentWindow.activar(this)');				
 				_li.setAttribute('onmouseOut','document.getElementById("mapa").contentWindow.desactivar(this)');
-				_li.setAttribute('onclick','document.getElementById("mapa").contentWindow.consultaPuntoAj('+_features[_nn].getProperties().id+')');
+				_li.setAttribute('onclick','_stat="cargando";document.getElementById("mapa").contentWindow.consultaPuntoAj('+_features[_nn].getProperties().id+')');
 				
 				_mod=document.getElementById('modelopuntoactividad').cloneNode(true);
 				
@@ -520,10 +608,10 @@ $HOY=date("Y-m-d");
 						
 				_activ.innerHTML=_activ.innerHTML+'<br><span class=\"autor\">' + _features[_nn].getProperties().nombreUsuario.toUpperCase() + '</span>';
 				_activ.innerHTML=_activ.innerHTML+'<span class=\"textobreve\">' + _features[_nn].getProperties().textobreve + '</span>';
-				
+						
 				if(_features[_nn].getProperties()!=undefined){
 					if(_features[_nn].getProperties().link!=undefined){
-						_li.setAttribute('img',_features[_nn].getProperties().link);
+						_li.setAttribute('img',_features[_nn].getProperties().linkth);
 					}
 				}
 				
@@ -542,14 +630,20 @@ $HOY=date("Y-m-d");
 		style: styleDef
 	    //source: _source
 	});
-	
+
+	var baseLayer = new ol.layer.Vector({
+		name: 'base general',
+		style: styleBase,
+	    source: _sourceBase
+	});
+		
 	var bloquedoLayer = new ol.layer.Vector({
 		name: 'bloqueadoLayer',
 	    source: _sBloqueado
 	});
 	
 	var resaltadoLayer = new ol.layer.Vector({
-		style: styleMapResalt,
+		style: styleMapResaltBase,
 		source: _sResalt
 	});
 
@@ -599,9 +693,10 @@ $HOY=date("Y-m-d");
 	      layerBing,
 	      vectorLayer,
 	      bloquedoLayer,
-	      resaltadoLayer,
 	      candidatoLayer,
 	      cargadoLayer,
+	      baseLayer,
+	      resaltadoLayer,
 	      areaLayer
 	    ],
 	    target: 'divMapa',
@@ -618,8 +713,7 @@ $HOY=date("Y-m-d");
 	  
 	mapa.on('pointermove', function(evt) {
 		
-        if (evt.dragging) {
-        	
+        if (evt.dragging) {        	
         	//console.log(evt);
         	//deltaX = evt.coordinate[0] - evt.coordinate_[0];
   			//deltaY = evt.coordinate[1] - evt.coordinate_[1];
@@ -628,7 +722,7 @@ $HOY=date("Y-m-d");
           return;
         }
         var pixel = mapa.getEventPixel(evt.originalEvent);
-
+		
         sobrePunto(pixel);
      });
 
@@ -649,6 +743,165 @@ $HOY=date("Y-m-d");
        }
     });
 	
+	mapa.on("moveend", function() {
+		recargarPuntos();
+	});	
+
+	/*mapa.on("zoomend", function() {
+		recargarPuntos();
+	});*/
+	
+	function recargarPuntos() {
+		console.log('funcion: recargarPuntos');
+		zoom=mapa.getView().getZoom();
+		res=mapa.getView().getResolution();
+		console.log(zoom);
+		//console.log(res);
+		//zoom = mapa.getZoom();
+		geo = mapa.getView().calculateExtent();
+		x0 = geo[0];
+		xf = geo[2];
+		y0 = geo[1];
+		yf = geo[3];
+		
+		//point.transform(new OpenLayers.Projection("EPSG:900913"), new OpenLayers.Projection("EPSG:4326"));
+		actividad = parent.document.getElementById("actividad").value;
+		/*console.log('actividad: '+ actividad + 
+					' zoom: '+ zoom + 
+					' x0: '+ x0 + 
+					' xf: '+ xf + 
+					' y0: '+ y0 + 
+					' yf: '+ yf);
+		*/			
+		obtienePuntos(actividad, zoom, x0, xf, y0, yf);
+	}
+	
+	function obtienePuntos(actividad, zoom, x0, xf, y0, yf) {
+		console.log('funcion: obtinenePuntos');
+		var parametros = {
+				"actividad" : actividad,
+				"z" : zoom,
+				"x0" : x0,
+				"xf" : xf,
+				"y0" : y0,
+				"yf" : yf,
+				"tipo" : 1					
+		};
+		/*
+		//Llamamos a los puntos de la actividad
+		$.ajax({
+			data:  parametros,
+			url:   'puntos_ajax.php',
+			type:  'post',
+			success:  function (response) {
+					procesarRespuestaPuntos(response, 1);
+			}
+		});
+		*/
+		parametros["tipo"] = 2;
+		//Llamamos a los puntos de otras actividades
+		$.ajax({
+			data:  parametros,
+			url:   './puntos_ajax.php',
+			type:  'post',
+			success:  function (response) {
+					procesarRespuestaPuntos(response, 2);
+			}
+		});
+	}		
+	function procesarRespuestaPuntos(response, tipo) {
+			
+			if(response!=''){
+				var res = $.parseJSON(response);
+				
+				var layer;
+				var divPuntos;
+				var activar = "activar";
+				var desactivar = "desactivar";
+				if (tipo == 1) {
+					layer = vectorLayer;
+					divPuntos = parent.document.getElementById('puntosdeactividad');
+				}
+				else {
+					layer = baseLayer;
+					divPuntos = parent.document.getElementById('puntosdebase');
+					activar += 'B';
+					desactivar += 'B';
+	
+				}
+				if(layer.getSource()!=null){
+					layer.getSource().clear();
+				}
+				divPuntos.innerHTML = "";
+			
+				for (i = 0; i < res.length; i++) {
+					if (res[i].id != null) {
+						var point = new ol.geom.Point([res[i].xPsMerc, res[i].yPsMerc]);
+						var pointFeature = new ol.Feature({geometry:point});
+						pointFeature.setId(res[i].id);
+						pointFeature.setProperties({ 'valor' : res[i].valor, 'id': res[i].id, 'categoria': res[i].categoria});	
+						
+						// Añadir el feature creado a la capa de puntos existentes       
+						layer.getSource().addFeature(pointFeature);	
+						
+						//console.log(pointFeature.getGeometry());
+							
+						var _li = parent.document.createElement('li');
+						_li.setAttribute('id','P_'+res[i].id);
+						
+						
+						_TX=limpiarAscii(res[i].texto);						
+						_li.setAttribute('title',_TX);
+						
+						
+						
+						_li.setAttribute('onmouseOver','document.getElementById(\"mapa\").contentWindow.' + activar + '(\"'+res[i].id+'\");this.className=\"seleccionado\"');
+						_li.setAttribute('onmouseOut','document.getElementById(\"mapa\").contentWindow.' + desactivar + '(\"'+res[i].id+'\");this.className=\"\"');
+												
+												
+						_mod=document.getElementById('modelopuntoactividad').cloneNode(true);
+						if (tipo == 1)
+							_mod.childNodes[0].setAttribute('style','border-color:'+res[i].color+';background-color:'+res[i].color+';');
+												
+						var _activ = parent.document.createElement('a');
+						
+						_activ.setAttribute('href','./actividad.php?actividad=' + res[i].id_actividades + '&registro='+res[i].id);
+						_activ.setAttribute('target','_blank');
+						
+						_activ.appendChild(_mod);	
+	
+						if(res[i].categAct == 1){
+							_activ.innerHTML=_activ.innerHTML + res[i].nombreCategoria;
+						}
+						else if(res[i].valorAct == 1){
+							_activ.innerHTML=_activ.innerHTML+res[i].valor;
+						}
+								
+						_activ.innerHTML=_activ.innerHTML+'<br><span class=\"autor\">' + res[i].nombreUsuario.toUpperCase() + '</span>';
+						_activ.innerHTML=_activ.innerHTML+'<span class=\"textobreve\">' + res[i].textobreve + '</span>';
+						if(res[i].linkth!=undefined){
+							_activ.innerHTML=_activ.innerHTML+'<img src=\"'+ res[i].linkth +'\">';
+						}
+						
+						
+						if(res[i]!=undefined){
+							if(res[i].link!=undefined){
+								_li.setAttribute('img',res[i].link);
+							}
+						}
+						_li.appendChild(_activ);
+						divPuntos.appendChild(_li);
+						
+						delete _li;
+					}
+				}
+				//console.log(baseLayer.getSource().getFeatures());
+			}
+			
+			if(parent._IdReg!=''){
+				consultaPuntoAj(parent._IdReg);
+			}
+		}		
 	function mostrarArea(_ac){
 		
 		_features=_sArea.getFeatures();
@@ -680,7 +933,7 @@ $HOY=date("Y-m-d");
 		for (i = 0; i < _features.length; i++) {		
 			_sCandidato.removeFeature(_features[i]);
 		}
-	      
+	     
 	    if(feature==undefined){
 	    	
 	    	if(parent._Aactiva=='si'){
@@ -694,10 +947,10 @@ $HOY=date("Y-m-d");
 	    		_res.data=Array();
 	    		_res.data.nuevo=Array();
 	    		
-	    		_coord=mapa.getCoordinateFromPixel(pixel);
-	    		_r = new ol.geom.Point(_coord);
+	    		_coord3857=mapa.getCoordinateFromPixel(pixel);
+	    		_r = new ol.geom.Point(_coord3857);
 	    		
-	    		_coord=ol.proj.transform(_coord,'EPSG:3857', 'EPSG:4326');
+	    		_coord=ol.proj.transform(_coord3857,'EPSG:3857', 'EPSG:4326');
 	    		
 				_fr = new ol.Feature({
 				    name: "Candidato",
@@ -710,7 +963,10 @@ $HOY=date("Y-m-d");
 	    		_res.data.nuevo={
 	    			'x': _coord[1],
 	    			'y': _coord[0],
-	    			'z': _view.getZoom()	    			
+	    			'z': _view.getZoom(),
+	    			'xPsMerc':_coord3857[1],
+					'yPsMerc':_coord3857[0],
+					'zResPsMerc':_view.getResolution()	    			
 	    		};
 	    		
 	    		parent.cargaFormulario(_res);
@@ -718,9 +974,10 @@ $HOY=date("Y-m-d");
 	        
 	    	return;
 	    	
-	    	}
+	    }
 		
 		_Pid=feature.getProperties().id;
+		 _stat='cargando';
 		consultaPuntoAj(_Pid);
 	}
 	
@@ -739,6 +996,25 @@ $HOY=date("Y-m-d");
 		mostrarArea(parent._Adat);	
 	}
 	
+	function actualizarCoorPsMerc(id,xPsMerc,yPsMerc){
+		
+		_datos={
+			'id':id,
+			'xPsMerc':xPsMerc,
+			'yPsMerc':yPsMerc			
+		};
+		
+		$.ajax({
+			data: _datos,
+			url:   'punto_actualizaPsMerc.php',
+			type:  'post',
+			success:  function (response){
+				console.log($.parseJSON(response));
+			}
+		})
+	}
+		
+	var _stat='cargando';
 	function consultaPuntoAj(_Pid){
 		
 		_datos={};
@@ -778,7 +1054,11 @@ $HOY=date("Y-m-d");
 				    }
 				}
 				
-				_view.fit(_clon.getGeometry(), {'duration': 1000, 'maxZoom' : (parseFloat(_res.data.punto.z))} );
+				console.log(_stat);
+				if(_stat=='cargando'){
+					_view.fit(_clon.getGeometry(), {'duration': 1000, 'maxZoom' : (parseFloat(_res.data.punto.z))} );
+					_stat='cargado';
+				}
 				
 			}
 		})
