@@ -2,17 +2,18 @@
 /**
 * actividad.php
 *
-* aplicación para cargar nuevos puntos de relevamiento
+* aplicación principal de intefaz, formulario de visualización y carga de nuevos puntos de relevamiento
 *  
-* 
-* @package    	UNmapa: Universidad Nacional de Moreno
+* @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
 * @subpackage 	actividad
-* @author     	Universidad Nacional deMoreno
+* @author     	Universidad Nacional de Moreno
 * @author     	<mario@trecc.com.ar>
-* @author    	http://www.unm.edu.ar/
-* @author		based on mapauba. www.uba.ar
-* @copyright	2017 Universidad Nacional de Moreno
-* @copyright	esta aplicación se desarrollo sobre una publicación GNU (agpl) 2014 TReCC SA
+* @author    	http://www.uba.ar/
+* @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
+* @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
+* @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
+* @copyright	2015 Universidad de Buenos Aires
+* @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
 * Este archivo es software libre: tu puedes redistriburlo 
@@ -27,6 +28,7 @@
 * 
 * Si usted no cuenta con una copia de dicha licencia puede encontrarla aquí: <http://www.gnu.org/licenses/>.
 */
+
 
 //if($_SERVER[SERVER_ADDR]=='192.168.0.252')ini_set('display_errors', '1');ini_set('display_startup_errors', '1');ini_set('suhosin.disable.display_errors','0'); error_reporting(-1);
 
@@ -229,10 +231,10 @@ if($RID>0){
 			echo "<a href='./actividad_config.php?actividad=$ID'>configurar esta actividad</a>";
 		}
 		
-		echo " / <span class='menor'>web de acceso directo: <span class='resaltado'>".$_SERVER['HTTP_REFERER']."?actividad=".$ID."</span></span>";	
+		
+		echo " / <span class='menor'>web de acceso directo: <span class='resaltado'>".$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF']."?actividad=".$ID."</span></span>";	
 		if($RID>0){$cons='verpuntos';}else{$cons='marcarpuntos';}	
 		
-	
 		//echo"<pre>";print_r($Actividad);echo"</pre>";
 		// formulario para agregar una nueva actividad		
 		if($ID==''){
@@ -470,7 +472,7 @@ if($RID>0){
 
 	var _Uid='<?php echo $UsuarioI;?>';
 	var _Aid='<?php echo $ID;?>';
-	var _Adat=Array();
+	var _Adata={};
 	var _Pdat=undefined;
 	//var _Pdat=Array();
 	var _mapainicialCargado='no';
@@ -580,7 +582,7 @@ if($RID>0){
 		if(_res.data.nuevo!=undefined){
 			
 			//responde a un click en un lugar sin datos de una actividad activa.
-			_ac=_Adat;
+			_ac=_Adata;
 			_ac.editor='1';
 			
 			if(_CargandoFormulario=='si'){
@@ -603,7 +605,7 @@ if($RID>0){
 		
 		_CargandoFormulario='si';
 		
-		_Adat=_ac;
+		_Adata=_ac;
 		
 		_pf=document.querySelector('#formulario[tipo="cerrado"]');
 		document.querySelector('#formulario[tipo="cerrado"]').style.display='block';
@@ -949,42 +951,57 @@ if($RID>0){
 			
 			xhr[_nn].onreadystatechange = function(evt){
 				//console.log(evt);
-				
-				if(evt.explicitOriginalTarget.readyState==4){
-					var _res = $.parseJSON(evt.explicitOriginalTarget.response);
-					//console.log(_res);
+				if(evt.explicitOriginalTarget != undefined){
 					
-					//alert('terminó '+_res.data.nf);
-					
-					if(_res.res=='exito'){							
-						//_file=document.querySelector('#listadosubiendo > a[nf="'+_res.data.nf+'"]');								
-						//document.querySelector('#listadoaordenar').appendChild(_file);
-						//_file.setAttribute('href',_res.data.ruta);
-						//_file.setAttribute('download',_file.innerHTML);
-						//_file.setAttribute('draggable',"true");
-						//_file.setAttribute('ondragstart',"dragFile(event)");
-						//_file.setAttribute('idfi',_res.data.nid);
-						
-						
-						document.querySelector('#formulario[tipo="edicion"] #link').value=_res.data.nuevonombre;
-						
-						if(_res.data.tipo){
-							//console.log('hola');
-							document.querySelector('#formulario[tipo="edicion"] #linkimagen').setAttribute('src',_res.data.nuevonombre);
-							document.querySelector('#formulario[tipo="edicion"] #linkimagen').style.display='block';
-							document.querySelector('#formulario[tipo="edicion"] #linkarchivo').style.display='none';
-							document.querySelector('#formulario[tipo="edicion"] #linkweb').style.display='none';	
+					if(evt.explicitOriginalTarget.readyState==4){
+						var _res = $.parseJSON(evt.explicitOriginalTarget.response);
+						//console.log(_res);
+						for(_nm in _res.mg){alert(_res.mg[_nm]);}
+						if(_res.res=='exito'){							
+							
+							document.querySelector('#formulario[tipo="edicion"] #link').value=_res.data.nuevonombre;
+							
+							if(_res.data.tipo=='imagen'){
+								//console.log('hola');
+								document.querySelector('#formulario[tipo="edicion"] #linkimagen').setAttribute('src',_res.data.nuevonombre);
+								document.querySelector('#formulario[tipo="edicion"] #linkimagen').style.display='block';
+								document.querySelector('#formulario[tipo="edicion"] #linkarchivo').style.display='none';
+								document.querySelector('#formulario[tipo="edicion"] #linkweb').style.display='none';	
+							}else{
+								document.querySelector('#formulario[tipo="edicion"] #linkimagen').setAttribute('src','');
+								document.querySelector('#formulario[tipo="edicion"] #linkimagen').style.display='none';
+							}
+							
+						}else{
+							document.querySelector('#formulario[tipo="edicion"] #link').value='error';
 						}
-						
-					}else{
-						//_file=document.querySelector('#listadosubiendo > a[nf="'+_res.data.nf+'"]');
-						//_file.innerHTML+=' ERROR';
-						//_file.style.color='red';
-						document.querySelector('#formulario[tipo="edicion"] #link').value='error';
+
 					}
-					//cargaTodo();
-					//limpiarcargando(_nombre);
-				
+				}else{
+					
+                    if(evt.currentTarget.readyState==4){
+                        var _res = $.parseJSON(evt.target.response);
+                        //console.log(_res);
+                        for(_nm in _res.mg){alert(_res.mg[_nm]);}
+                        if(_res.res=='exito'){
+                        
+                        	document.querySelector('#formulario[tipo="edicion"] #link').value=_res.data.nuevonombre;
+							if(_res.data.tipo=='imagen'){
+								//console.log('hola');
+								document.querySelector('#formulario[tipo="edicion"] #linkimagen').setAttribute('src',_res.data.nuevonombre);
+								document.querySelector('#formulario[tipo="edicion"] #linkimagen').style.display='block';
+								document.querySelector('#formulario[tipo="edicion"] #linkarchivo').style.display='none';
+								document.querySelector('#formulario[tipo="edicion"] #linkweb').style.display='none';	
+							}else{
+								document.querySelector('#formulario[tipo="edicion"] #linkimagen').setAttribute('src','');
+								document.querySelector('#formulario[tipo="edicion"] #linkimagen').style.display='none';
+							}
+							 
+                        }else{
+                            document.querySelector('#formulario[tipo="edicion"] #link').value='error';
+                        }
+                    }
+										
 				}
 				
 			}

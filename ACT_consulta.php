@@ -3,17 +3,17 @@
 *MAPAactividad.php
 *
 *
-* aplicación para generar mapas para el dearrollo de una actividad, permitiendo la visualización y carga de puntos)
 * 
-* @package    	Plataforma Colectiva de Información Territorial: UBATIC2014
-* @subpackage 	mapas
-* @author     	Universidad de Buenos Aires
+* @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
+* @subpackage 	actividad
+* @author     	Universidad Nacional de Moreno
 * @author     	<mario@trecc.com.ar>
 * @author    	http://www.uba.ar/
 * @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
+* @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
 * @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
 * @copyright	2015 Universidad de Buenos Aires
-* @copyright	esta aplicación se desarrollo sobre una publicación GNU 2014 TReCC SA
+* @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
 * Este archivo es software libre: tu puedes redistriburlo 
@@ -29,6 +29,7 @@
 * Si usted no cuenta con una copia de dicha licencia puede encontrarla aquí: <http://www.gnu.org/licenses/>.
 */
 
+ini_set('display_errors',true);
 include('./includes/conexion.php');
 include('./includes/conexionusuario.php');
 include("./includes/fechas.php");
@@ -47,9 +48,12 @@ function terminar($Log){
 
 
 //include("./includes/BASEconsultas.php");
+$UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
+if($UsuarioI==""){
+	echo "usuario no identificado";exit;
+	header('Location: ./login.php');
+}
 
-$UsuarioI = $_SESSION['Unmapa'][$CU]['USUARIOID'];
-if($UsuarioI==""){header('Location: ./login.php');}
 
 //$MODO = $_GET['modo'];
 
@@ -76,7 +80,6 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 
 	
 	//consulta categorias utilizadas para la actividad seleccionada
-	if($ID!=''){$andid = " AND `ACTcategorias`.`id_p_actividades_id` = '".$ID."'";}else{$andid='';}
 	$query="
 		SELECT
 			`ACTcategorias`.`id`,
@@ -87,11 +90,12 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		    `ACTcategorias`.`zz_fusionadaa`,
 		    CO_color
 		FROM 
+		
 			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
 		WHERE
-			1=1
-			$andid
-		
+			id_p_actividades_id='".$ID."'
+			AND
+			zz_borrada='0'
 		ORDER BY 
 			`ACTcategorias`.`orden` ASC
 	";
@@ -99,13 +103,18 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	
 	if($Conec1->error!=''){
 		$Log['tx'][]='error en la consulta';
+		$Log['tx'][]=utf8_encode($Conec1->error);
+		$Log['tx'][]=utf8_encode($query);
 		$Log['res']='err';
 		terminar($Log);
 	}
 		
 	//echo $query;
 	while($fila= $Consulta->fetch_assoc()){
-		$ActCat[$fila['id_p_actividades_id']][$fila['id']]=$fila;
+		foreach($fila as $k => $v){
+			$ACT[$fila['id_p_actividades_id']]['categorias'][$fila['id']][$k]=utf8_encode($v);
+		}
+		$ACT[$fila['id_p_actividades_id']]['categorias'][$fila['id']]['cant']=0;
 		
 		if($fila['zz_fusionadaa']>0){
 			$dest=$fila['zz_fusionadaa'];
@@ -130,17 +139,19 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	$Consulta = $Conec1->query($query);
 	
 	if($Conec1->error!=''){
-		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]=utf8_encode($Conec1->error);
+		$Log['tx'][]=utf8_encode($query);
 		$Log['res']='err';
 		terminar($Log);
 	}
 	//echo $query;
 	while($row=$Consulta->fetch_assoc()){
-		$Roles[$row['id']]=$row;
+		foreach($row as $k => $v){
+			$Roles[$row['id']][$k]=utf8_encode($v);
+		}
 	}	
 	
 	//consulta categorias utilizadas para la actividad seleccionada
-	if($ID!=''){$andid = " AND `ACTaccesos`.`id_actividades` = '".$ID."'";}else{$andid='';}
 	$query="
 		SELECT 
 			`ACTaccesos`.`id`,
@@ -151,19 +162,22 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		FROM 
 			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTaccesos`
 		WHERE
-			1=1
-			$andid
+			`ACTaccesos`.`id_actividades` = '".$ID."'
 
 	";
 	$Consulta = $Conec1->query($query);
 	if($Conec1->error!=''){
-		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]=utf8_encode($Conec1->error);
+		$Log['tx'][]=utf8_encode($query);
 		$Log['res']='err';
 		terminar($Log);
 	}
 	
 	//echo $query;
 	while($fila=$Consulta->fetch_assoc()){
+		foreach($fila as $k => $v){
+			$ActAcc[$fila['id_actividades']]['Acc'][$fila['nivel']][$fila['id']][$k]=utf8_encode($v);
+		}
 		
 		$ActAcc[$fila['id_actividades']]['Acc'][$fila['nivel']][$fila['id']]=$fila;
 		
@@ -185,7 +199,6 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		
 			`actividades`.`id`,
 			`actividades`.`abierta`,
-			
 			`actividades`.`resumen`,
 		    `actividades`.`consigna`,
 		    `actividades`.`x0`,
@@ -223,7 +236,8 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		    usuarios.apellido as Uapellido,
 		    (select count(1) from `geodatos` WHERE `geodatos`.id_actividades = `actividades`.id and `geodatos`.zz_borrada='0') cantidadPuntos
 		    
-		FROM `UNmapa`.`actividades`	
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`
 		
 		LEFT JOIN 
 			usuarios
@@ -244,7 +258,8 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	";	
 	$Consulta = $Conec1->query($query);
 	if($Conec1->error!=''){
-		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]=utf8_encode($Conec1->error);
+		$Log['tx'][]=utf8_encode($query);
 		$Log['res']='err';
 		terminar($Log);
 	}
@@ -260,17 +275,20 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	    `usuarios`.`mail`,
 	    `usuarios`.`telefono`,
 	    `usuarios`.`log`
-	FROM `UNmapa`.`usuarios`
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
 	";	
 	$ConsultaU = $Conec1->query($query);
 	if($Conec1->error!=''){
-		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]=utf8_encode($Conec1->error);
 		$Log['res']='err';
 		terminar($Log);
 	}
 	
-	while($fila=$ConsultaU->fetch_assoc()){
-		$Usuarios[$fila['id']]=$fila;		
+	while($fila=$ConsultaU->fetch_assoc()){	
+		foreach($fila as $k => $v){
+			$Usuarios[$fila['id']][$k]=utf8_encode($v);
+		}	
 	}
 		
 	foreach($ActAcc as $Kact => $Vact){
@@ -294,15 +312,10 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	echo $Conec1->error;
 	while($fila=$Consulta->fetch_assoc()){
 		
-		$cat['ACTcategorias']=array();
-		$cat['ACTcategorias']=$ActCat[$fila['id']];
-		
-		$ACT[$fila['id']]=$fila;
-		
-		$a[0]=array_slice($fila,0,20);//corta el array de datos e intercala el listado de categorías-
-		$a[1]=array_slice($fila,20);
-		
-		$ACT[$fila['id']]=array_merge($a[0],$cat,$a[1]);	
+		foreach($fila as $k => $v){
+			$ACT[$fila['id']][$k]=utf8_encode($v);
+		}
+			
 		
 		$ACT[$fila['id']]['acc']=$ActAcc[$fila['id']]['acc'];
 		$ACT[$fila['id']]['acc']['editores']['n']['id']='n';
@@ -333,22 +346,32 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		    `atributos`.`escala`,
 		    `atributos`.`nivelUsuario`,
 		    `atributos`.`areaUsuario`
-		FROM `UNmapa`.`atributos`
+		FROM 
+			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`atributos`
 		LEFT JOIN geodatos
 		ON geodatos.id=atributos.id
 		WHERE
 		geodatos.zz_borrada='0'
+		AND
+		atributos.id_actividades='".$ID."'
 		;
 	";
 	$Consulta = $Conec1->query($query);
 	if($Conec1->error!=''){
-		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]=utf8_encode($Conec1->error);
 		$Log['res']='err';
 		terminar($Log);
 	}
 	
 	while($fila=$Consulta->fetch_assoc()){
 		$cat=$CatConversor[$fila['categoria']];
+		
+		$ACT[$fila['id_actividades']]['categorias'][$cat]['cant']++;
+		
+		foreach($fila as $k => $v){
+			$ATT[$fila['id']][$k]=utf8_encode($v);
+		}
+				
 		$ATT[$fila['id']]=$fila;
 		$ATT[$fila['id']]['categoria']=$cat;
 	}
@@ -372,14 +395,19 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 	    `geodatos`.`id_actividades`,
 	    `geodatos`.`fecha`
 		
-	FROM `UNmapa`.`geodatos`
-	where zz_borrada='0'
-	and id_usuarios>0
+	FROM 
+		`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`geodatos`
+	where 
+		zz_borrada='0'
+	and 
+		id_usuarios>0
+	AND 
+		geodatos.id_actividades ='".$ID."'
 	";
 	
 	$Consulta = $Conec1->query($query);
 	if($Conec1->error!=''){
-		$Log['tx'][]=$Conec1->error;
+		$Log['tx'][]=utf8_encode($Conec1->error);
 		$Log['res']='err';
 		terminar($Log);
 	}
@@ -400,7 +428,7 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		}	
 	}
 
-
+$Log['res']='exito';
 $Log['data']=$ACT;
 terminar($Log);
 ?>

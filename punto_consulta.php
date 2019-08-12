@@ -4,15 +4,16 @@
 *
 * aplicación que consulta el listado de actividades presentadas.
 * 
-* @package    	Plataforma Colectiva de Información Territorial: UBATIC2014
-* @subpackage 	BASE
-* @author     	Universidad de Buenos Aires
+* @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
+* @subpackage 	actividad
+* @author     	Universidad Nacional de Moreno
 * @author     	<mario@trecc.com.ar>
 * @author    	http://www.uba.ar/
 * @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
+* @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
 * @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
 * @copyright	2015 Universidad de Buenos Aires
-* @copyright	esta aplicación se desarrollo sobre una publicación GNU 2014 TReCC SA
+* @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
 * Este archivo es software libre: tu puedes redistriburlo 
@@ -27,6 +28,7 @@
 * 
 * Si usted no cuenta con una copia de dicha licencia puede encontrarla aquí: <http://www.gnu.org/licenses/>.
 */
+
 
 ini_set('display_errors',true);
 
@@ -184,7 +186,8 @@ FROM
 	`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
 WHERE
 	id_p_actividades_id = '".$_POST['aid']."'
-	AND zz_fusionadaa is null
+	AND zz_fusionadaa = '0'
+	AND zz_borrada='0'
 ORDER BY orden
 ";
 

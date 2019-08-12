@@ -5,15 +5,16 @@
 * aplicación para configurar una actividad
 *  
 * 
-* @package    	Plataforma Colectiva de Información Territorial: UBATIC2014
+* @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
 * @subpackage 	actividad
-* @author     	Universidad de Buenos Aires
+* @author     	Universidad Nacional de Moreno
 * @author     	<mario@trecc.com.ar>
 * @author    	http://www.uba.ar/
 * @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
+* @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
 * @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
 * @copyright	2015 Universidad de Buenos Aires
-* @copyright	esta aplicación se desarrollo sobre una publicación GNU 2014 TReCC SA
+* @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
 * Este archivo es software libre: tu puedes redistriburlo 
@@ -173,7 +174,8 @@ $Tabla['ACTcategorias']['Type']='TablaHija';
 	<?php include("./includes/meta.php");?>
 	<link href="css/treccppu.css" rel="stylesheet" type="text/css">
 	<link href="css/UNmapa.css" rel="stylesheet" type="text/css">		
-	
+    <script src="./js/jquery-ui-1.11.4.custom/external/jquery/jquery.js"></script>
+  	
 	<style type='text/css'>
 	table{
 		border-collapse: collapse;
@@ -270,6 +272,9 @@ $Tabla['ACTcategorias']['Type']='TablaHija';
 		select{
 			margin:0;
 		}	
+		#listadobusqueda a{
+			display:block;
+		}
 	</style>
 	
 	
@@ -279,46 +284,24 @@ $Tabla['ACTcategorias']['Type']='TablaHija';
 	
 	<?php
 	include('./includes/encabezado.php');
-	
-	if($ID!=''){
-		echo "
-		<div class='recuadro' id='recuadro2'>		
-			<h4>Puntos visualizados del banco de datos</h4>
-			<ul id='puntosdebase'>		
-			</ul>	
-		</div>
-		<div class='recuadro' id='recuadro3' >
-			<h4>Puntos relevados en esta actividad</h4>
-			<ul id='puntosdeactividad'>		
-			</ul>
-		</div>
-		<iframe src='' id='ventanaaccion' name='ventanaaccion'></iframe>
-		";
-		
-	}
-	?>
-	
+?>
+
 	
 	<div id="pageborde"><div id="page">
-		<?php
 		
-		echo  "<h1>Gestión de Usuarios:  <span class='menor'>de actividad Nº $Actividad : ".$Contenido['resumen']."</span></h1>";
+		<h1>Gestión de Usuarios:  <span class='menor'>de actividad Nº <span id='actividad'></span> : <span id='resumen'></span></span></h1>
+		<a href='./actividad.php?actividad='>acceder a la Actividad</a><br>
+		<a href='./actividad_config.php?actividad='>acceder a la Configuración de la actividad</a>		
 		
-			if($Coordinacion=='activa'){
-				echo "<a href='./actividad.php?actividad=$ID'>acceder a la Actividad</a><br>";
-				echo "<a href='./actividad_config.php?actividad=$ID'>acceder a la Configuración de la actividad</a>";				
-			}
-		?>
-
-
+		
+		
+		<h2>Usuarios Registrados</h2>
+			
 		<?php
-			// formulario para agregar una nueva actividad		
-		if($ID==''){
-				echo "la actividad no fue llamada correctamnte";
-		}else{
+
 			// formulario para modificar una actividad 
 			
-			echo "<h2>Usuarios Registrados</h2>";
+
 			
 			
 			foreach($Roles as $rid => $rdata){
@@ -360,55 +343,79 @@ $Tabla['ACTcategorias']['Type']='TablaHija';
 				
 			}
 			
-			
-			//echo "<pre>";print_r($Contenido['acc']);echo "</pre>";
-			
-			
-			/*
-
-			foreach($Contenido['acc']['editores'] as $e){
-				$u=$e['usuario'];
-				echo "<tr>";
-				echo "<td>".$u['nombre']."</td>";
-				echo "<td>".$u['apellido']."</td>";
-				echo "<td>".$u['mail']."</td>";
-				echo "</tr>";
-				
-			}
-			echo "</table>";
-			echo "<h3>rol: participante</h3>";
-			echo "<table>";
-			foreach($Contenido['acc']['participantes'] as $e){
-				$u=$e['usuario'];
-				echo "<tr>";
-				echo "<td>".$u['nombre']."</td>";
-				echo "<td>".$u['apellido']."</td>";
-				echo "<td>".$u['mail']."</td>";
-				echo "</tr>";
-			}
-			echo "</table>";
-			*/
-			echo "<form method='post' target='ventanaaccion' action='./acci_procearusuarios.php?actividad=$ID'>";
-			
-			echo "<h2> Gestión de usuarios</h2>";
-			echo "<h3>genenerar usuarios desde tabla</h3>";
-			echo "<p> pegue a continuación su tabla (cortar pegar desde hoja de calculo <a download='download' href='./auxiliar/tabla_ejemplo_usuarios.xls'>ver ejemplo</a>)</p>";
-			echo "<textarea name='tablausuarios'></textarea>";
-			echo "<input type='submit'>";
-			echo "<form>";
-			
-			echo "<h3>procesar tabla</h3>";
-			echo "<div id='tablaproce'>";
-			echo "<p>no se han cargado datos de tabla</p>";
-			echo "</div>";
-			
-		}
 		?>
 	
+		<form method='post' target='ventanaaccion' action='./acci_procearusuarios.php?actividad=$ID'>";
+			
+			<h2> Gestión de usuarios</h2>
+			<h3><a onclick='this.parentNode.parentNode.querySelector("#formcsv").style.display="block";'>genenerar usuarios desde tabla</a></h3>
+			<div id='formcsv' style='display:none;'>
+				<p> pegue a continuación su tabla (cortar pegar desde hoja de calculo <a download='download' href='./auxiliar/tabla_ejemplo_usuarios.xls'>ver ejemplo</a>)</p>
+				<textarea name='tablausuarios'></textarea>
+				<input type='submit'><input type='button' value='cancelar' onclick="this.parentNode.style.display='none'">
+				
+				<h3>procesar tabla</h3>
+				<div id='tablaproce'>
+				<p>no se han cargado datos de tabla</p>
+				</div>	
+			</div>	
+		</form>
+		
+		<form onsubmit='eventy.preventDefault()'>	
+			<div id='busqueda'>buscar usuaries: <input onkeyup='actualizabusqueda(this)'></div>
+			<div id='listadobusqueda'></div>
+		</form>
+		
 	</div></div>
+
+
+
+
 	
 	<script type='text/javascript'>
+
 		
+		var _Aid='<?php echo $_POST['actividad'];?>';
+	
+		function actualizabusqueda(_this){
+			
+			if(_this.value.length<3){return;}
+				
+			_datos={
+				"aid":_Aid,
+				"busqueda":_this.value
+			};
+			
+			$.ajax({
+				data: _datos,
+				url:   'USU_buscar.php',
+				type:  'post',
+				success:  function (response){
+					var _res = $.parseJSON(response);
+					console.log(_res);
+					if(_res.res!='exito'){return;}
+					_list=document.querySelector('#listadobusqueda');
+					_list.innerHTML='';
+					for(_nu in _res.data.candidatos){
+						_aa=document.createElement('a');
+						_aa.setAttribute('onclick','sumarUsuario(this)');
+						_dat=_res.data.usuarios[_res.data.candidatos[_nu]];
+						_aa.setAttribute('idusu',_dat.id);
+						_aa.innerHTML=_dat.nombre+' '+_dat.apellido+' ('+_dat.log+')';
+						_list.appendChild(_aa);
+					}
+				}
+			})
+			
+			if(_this.value=='-agregar nuevo-'){
+				_this.setAttribute('value','');
+			}
+		}
+		
+		
+		function sumarUsuario(_this){
+			alert('en desarrollo incorporr a esta actividad al ussaurio id:'+_this.getAttribute('idusu'));
+		}
 		function validarContenido(_this){
 			if(_this.value=='-agregar nuevo-'){
 				_this.setAttribute('value','');

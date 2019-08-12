@@ -4,16 +4,16 @@
 *
 * aplicación para configurar una actividad
 *  
-* 
-* @package    	Plataforma Colectiva de Información Territorial: UBATIC2014
+* @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
 * @subpackage 	actividad
-* @author     	Universidad de Buenos Aires
+* @author     	Universidad Nacional de Moreno
 * @author     	<mario@trecc.com.ar>
 * @author    	http://www.uba.ar/
 * @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
+* @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
 * @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
 * @copyright	2015 Universidad de Buenos Aires
-* @copyright	esta aplicación se desarrollo sobre una publicación GNU (agpl) 2014 TReCC SA
+* @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
 * Este archivo es software libre: tu puedes redistriburlo 
@@ -30,8 +30,6 @@
 */
 
 
-//if($_SERVER[SERVER_ADDR]=='192.168.0.252')ini_set('display_errors', '1');ini_set('display_startup_errors', '1');ini_set('suhosin.disable.display_errors','0'); error_reporting(-1);
-
 // verificación de seguridad 
 include('./includes/conexion.php');
 include('./includes/conexionusuario.php');
@@ -47,7 +45,7 @@ if($UsuarioI==""){
 }
 
 // función de consulta de actividades a la base de datos 
-include("./actividades_consulta.php");
+// include("./actividades_consulta.php");
 
 
 
@@ -70,123 +68,13 @@ if(isset($_POST['actividad'])){
 if($Actividad==''){
 	echo "ERROR de Acceso 1";exit;	
 	header('location: ./actividades.php');	//si no hay una actividad definida esta página no debería consultarse
-
 }
 
-
-// función para obtener la información de la actividad en cuestion 
-$Contenido =  reset(actividadesconsulta($ID,$seleccion));
-//echo "<pre>";print_r($Contenido);echo "</pre>";
-
-
-foreach($Contenido['Acc'][2] as $acc => $accdata){
-	if($accdata['id_usuarios']==$UsuarioI){
-		$Coordinacion='activa';
-	}
-}
-foreach($Contenido['Acc'][3] as $acc => $accdata){
-	if($accdata['id_usuarios']==$UsuarioI){
-		$Administracion='activa';
-		$Coordinacion='activa';
-	}
-}
-		
-if($Coordinacion!='activa'){
-	echo "($UsuarioI == ".$Contenido['zz_AUTOUSUARIOCREAC'];
-	echo "ERROR de Acceso 2";
-	header('location: ./actividades.php');	//si no se es el autor de la actividad no se permite la configuración
-}
-
-//funcion para extraer la estructura de la tabla de almacenamineto de la actividad
-
-$query="SHOW FULL COLUMNS FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`";
-$Consulta = $Conec1->query($query);
-while($row = $Consulta->fetch_assoc()){
-	$Tabla[$row['Field']]=$row;
-};
-$Tabla['ACTcategorias']['Comment']='Menú de categorias';
-$Tabla['ACTcategorias']['Type']='TablaHija';
-//echo "<pre>";print_r($Tabla);echo "</pre>";
-
-
-// el reingreso a esta dirección desde su propio formulario php crea o modifica un registro de actividad 
-if(isset($_POST['accion'])){
-	$accion =$_POST['accion'];
-			
-	if($_POST['accion']=='guardar'){
-		
-		foreach($Contenido as $k => $v){				
-			if(substr($k,0,3)!='zz_'&&$k!='id'&&$k!='geometria'&&$k!='GEO'){										 
-				if(isset($_POST[$k])){						
-					$set.="`$k`='".$_POST[$k]."', ";						
-				}else{						
-					
-				}					
-			}
-		}
-		
-		
-		if($_POST['accionpub']=='Publicar'){
-			$set.="`zz_PUBLICO`='1', ";
-		}
-		
-		
-		if($_POST['accionelim']=='Confirmo Eliminar'&&$Administracion=='activa'){
-			$set.="`zz_borrada`='1', ";
-		}		
-				
-					
-		$set= substr($set,0,-2);					
-		
-		if($Coordinacion=='activa'){
-			
-			$query = "		
-				UPDATE 
-					`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`actividades`
-				SET
-					$set
-				WHERE `id` = '".$Actividad."'
-				";
-			$Consulta = $Conec1->query($query);
-			echo $Conec1->error;
-			$ID=$Actividad;
-			
-			//echo $query;
-			//exit;
-		}else{
-			echo "no se encontraron permisos de edición de actividad para su usuario."; 
-			exit;
-		}
-		
-		//recarga los datos de la actividad
-		$Contenido =  reset(actividadesconsulta($ID,$seleccion));
-		
-	}
-}
-//echo "<pre>";print_r($Contenido);echo "</pre>";
-// medicion de rendimiento lamp 
-	$starttime = microtime(true);
 
 // filtro de representación restringe documentos visulazados, no altera datos estadistitico y de agregación 
 	$FILTRO=isset($_GET['filtro'])?$_GET['filtro']:'';	
 	
-// filtro temporal de representación restringe documentos visulazados, no altera datos estadistitico y de agregación 	
-	$fechadesde_a=isset($_GET['fechadesde_a'])?str_pad($_GET['fechadesde_a'], 4, "0", STR_PAD_LEFT):'0000';
-	$fechadesde_m=isset($_GET['fechadesde_m'])?str_pad($_GET['fechadesde_m'], 2, "0", STR_PAD_LEFT):'00';
-	$fechadesde_d=isset($_GET['fechadesde_d'])?str_pad($_GET['fechadesde_d'], 2, "0", STR_PAD_LEFT):'00';
-	if($fechadesde_a!='0000'&&$fechadesde_m!='00'&&$fechadesde_d!='00'){
-		$FILTROFECHAD=$fechadesde_a."-".$fechadesde_m."-".$fechadesde_d;
-	}else{
-		$FILTROFECHAD='';
-	}
-	$fechahasta_a=isset($_GET['fechahasta_a'])?str_pad($_GET['fechahasta_a'], 4, "0", STR_PAD_LEFT):'0000';
-	$fechahasta_m=isset($_GET['fechahasta_m'])?str_pad($_GET['fechahasta_m'], 2, "0", STR_PAD_LEFT):'00';
-	$fechahasta_d=isset($_GET['fechahasta_d'])?str_pad($_GET['fechahasta_d'], 2, "0", STR_PAD_LEFT):'00';
-	if($fechahasta_a!='0000'&&$fechahasta_m!='00'&&$fechahasta_d!='00'){
-		$FILTROFECHAH=$fechahasta_a."-".$fechahasta_m."-".$fechahasta_d;
-	}else{	
-		$FILTROFECHAH='';
-	}
+
 ?>
 
 	<title>UNmapa - Cofiguración de actividades</title>
@@ -203,6 +91,9 @@ if(isset($_POST['accion'])){
 	}
 	td, tr, th, table{
 		font-size:11px;
+	}
+	tr[fusionada='si']{
+		background-color:#bbb;
 	}
 		.dato.fecha{
 		    width: 60px;
@@ -240,13 +131,13 @@ if(isset($_POST['accion'])){
 		 	vertical-align:middle;
 		 }
 		 input.ano{
-		 	width:60px;
+		 	width: 32px;
 		 }
 		 input.mes{
-		 	width:30px;
+		 	width:20px;
 		 }
 		 input.dia{
-		 	width:30px;
+		 	width:20px;
 		 }
 		 input#C_resumen{
 		 	width:500px;
@@ -255,24 +146,21 @@ if(isset($_POST['accion'])){
 			background-color:#fdd;
 			color:#d00;
 		}
-		#L_valorAct, #L_valorAct, #L_valorDat, #L_valorUni, 
-		#L_textobreveAct, #L_textobreveDat, 
-		#L_textoAct, #L_textoDat, 
-		#L_adjuntosAct, #L_adjuntosExt, 
-		#L_categAct, #L_categDat, #L_categLib{
-			width:130px;
-		}
+		
 		div.emasc:after{
 			color:red;
 			content:"\A"; white-space:pre; 
 		}
 		textarea{
-			height: 100px;
-		    width: 780px;
+			height: 150px;
+		    width: 250px;
 		    font-size:12px;
 		}
+		textarea#C_consigna{
+			width: 780px;			
+		}
 		table{
-			width: 780px;
+			width: 565px;
 		}
 		div.emasc{
 			display:inline-block;
@@ -349,8 +237,123 @@ label.upload{
 label.upload:hover{
 	background-color:#CEF6F5;
 }
-	</style>
+
+
+
+form#fusionarCat{
+	display:none;
+	position:fixed;
+	width:400px;
+	left:calc(50vw - 200px);
+	height:200px;
+	top:calc(50vh - 100px);
+	background-color:#fff;
+	border:2px solid #08AFD9;
+	box-shadow:10px 10px 10px #000;
+	z-index:100;
+}
+form#fusionarCat label{
+	width:80px;
+	text-align:right;
+}
+form#fusionarCat input{
+	width:80px;
+}
+form#fusionarCat input[type="text"]{
+	width:310px;
+}
+form#fusionarCat input[value="eliminar"]{
+	background-color:#f00;
+	color:#000;
+}
+form#fusionarCat input[value="eliminar"][disabled='disabled']{
+	opacity:0.2;
+}
+form#fusionarCat textarea{
+	width:310px;
+	height:30px;
+}
+
+
+form#categoria{
+	display:none;
+	position:fixed;
+	width:400px;
+	left:calc(50vw - 200px);
+	height:200px;
+	top:calc(50vh - 100px);
+	background-color:#fff;
+	border:2px solid #08AFD9;
+	box-shadow:10px 10px 10px #000;
+	z-index:100;
+}
+form#categoria label{
+	width:80px;
+	text-align:right;
+}
+form#categoria input{
+	width:80px;
+}
+form#categoria input[type="text"]{
+	width:310px;
+}
+form#categoria input[value="eliminar"]{
+	background-color:#f00;
+	color:#000;
+}
+form#categoria input[value="eliminar"][disabled='disabled']{
+	opacity:0.2;
+}
+form#categoria textarea{
+	width:310px;
+	height:30px;
+}
+.emasc h2{
+	float:left;
+	width:210px;
+	margin-top:3px;
+	margin-bottom:3px;
+}
+.emasc h2 label{
+	width:180px;
+	font-size:15px;
+	font-weight:bold;
+}
+
+#L_hasta, #L_desde, #L_nivel, #L_categLib, #L_categDat, #L_adjuntosDat, #L_valorDat, #L_valorUni{
+	width:130px;	
+}
+#L_objeto{
+	width:230px;
+}
+
+.emasc[estado="inactivo"]{
+	width:250px;
 	
+}
+
+.emasc[estado="inactivo"] .emasc{
+	display:none;
+}
+
+.emasc table td div{
+	width:30px;
+	height:10px;
+}
+
+td.link:hover{
+	background-color:#08afd9;
+	color:#fff;
+}
+td.link{
+	cursor:pointer;
+}
+
+.desc{
+	width:250px;
+}
+	</style>
+
 	
 </head>
 
@@ -373,198 +376,511 @@ label.upload:hover{
 		</div>
 		<iframe src='' id='ventanaaccion' name='ventanaaccion'></iframe>
 		";
-		
+	}
+	
+	
+	if($ID==''){
+			echo "la actividad no fue llamada correctamnte";
+			exit;
 	}
 	
 	?>
 	
 	
 	<div id="pageborde"><div id="page">
-
+		<h1>Configuración: <span class='menor'>de actividad Nº <?php echo $Actividad." : ". $Contenido['resumen'];?></span></h1>
+		<a href='./actividad.php?actividad=<?php echo $ID;?>'>acceder a la Actividad</a>
+							
 		<?php
-
-			echo  "<h1>Configuración: <span class='menor'>de actividad Nº $Actividad : ".$Contenido['resumen']."</span></h1>";
-		
-			if($Coordinacion=='activa'){
-				echo "<a href='./actividad.php?actividad=$ID'>acceder a la Actividad</a>";
-			}
-				
-			echo "<br><a href='./actividad_usuarios.php?actividad=$ID'>acceder a la Gestión de Usuarios de la actividad</a>";
-		
+			if($Coordinacion=='activa'){	
+				echo "<br><a href='./actividad_usuarios.php?actividad=$ID'>acceder a la Gestión de Usuarios de la actividad</a>";
+			}			
 		?>
-
-		<iframe id='mapa' name='mapa' src='./MAPAconfig.php?actividad=<?php echo $Actividad;?>&consulta=creararea'></iframe>
-		
-		<?php
-			// formulario para agregar una nueva actividad		
-		if($ID==''){
-				echo "la actividad no fue llamada correctamnte";
-		}else{
-			// formulario para modificar una actividad 
-			/*
-			echo "<form id='adjuntador' enctype='multipart/form-data' method='post' action='./agrega_adjunto.php' target='cargaimagen'>";
-			echo "<label title='el archivo de imagen aerea es representado en el mapa dentro de las coordenadas definidas más adelante.' style='position:relative;' class='upload'>";							
-				echo "<span id='upload' style='position:absolute;top:0px;left:0px;'>arrastre o busque aquí un archivo de imagen aerea</span>";
-				echo "<input id='uploadinput' style='position:relative;opacity:0;' type='file' name='upload' value='' onchange='this.parentNode.parentNode.submit();'></label>";
-				echo "<input type='hidden' id='actividad' name='actividad' value='".$ID."'>";
-				echo "<input type='hidden' id='tipo' name='tipo' value='img.png'>";
-			echo "</form>";
-			echo "<iframe id='cargaimagen' name='cargaimagen'></iframe>";
 			
-			$carpnum=str_pad($ID, 8, '0', STR_PAD_LEFT);
-			$ruta="./documentos/actividades/".$carpnum."/img.png";
-			$src='';
-			if(file_exists($ruta)){$src="src='".$ruta."'";}
-			echo "<img id='adjunto' $src>";
-			*/
+			<iframe id='mapa' name='mapa' src='./MAPAconfig.php?actividad=<?php echo $ID;?>&consulta=creararea'></iframe>
 			
-						
-			echo "<form method='post' action='./actividad_config.php?actividad=$ID'>";
-			echo "<input type='hidden' name='accion' value='guardar'>";
 			
-			echo "<input type='submit' value='guardar cambios'>";
-			echo "<input type='submit' title='Al publicarse una actividad, permite la inscripción de participantes y la carga de datos' name='accionpub' value='Publicar'>";
+			<form id='categoria'>
+				<h2>Categoria</h2>
+				<input type='hidden' name='idcat'>
+				<label>nombre:</label><input type='text' name='nombre'><br>
+				<label>descripción:</label><textarea name='descripcion'></textarea><br>
+				<label>orden:</label><input type='number' name='orden'>
+				<label>color:</label><input type='color' name='CO_color'>	<br>
+				<br>
+				<input type='button' name='accion' value='guardar' onclick='enviarCategoria();'>
+				<input type='button' name='accion' value='cancelar' onclick='this.parentNode.style.display="none";'>
+				<input type='button' name='accion' value='eliminar' onclick='eliminarCategoria();'>
+			</form>
 			
-			if($Administracion=='activa'){
-				echo "<input type='button' title='Al eliminarse una actividad, esta se enviará a la papelera, no estará visible para ningún usuario' id='elim' value='Eliminar' onclick='this.style.display=\"none\";document.getElementById(\"elimC\").style.display=\"inline-block\";document.getElementById(\"elimNo\").style.display=\"inline-block\";'>";
-				echo "<input type='button' style='display:none;' title='cancelar eliminación' id='elimNo' value='Cancelar' onclick='this.style.display=\"none\";document.getElementById(\"elimC\").style.display=\"none\";document.getElementById(\"elim\").style.display=\"inline-block\";'>";
-				echo "<input type='submit' style='display:none;' title='Al eliminarse una actividad, esta se enviará a la papelera, no estará visible para ningún usuario' name='accionelim' value='Confirmo Eliminar' id='elimC'>";
-			}
-			echo "<input type='submit' title='Al duplicarse se generará una nueva actividad con igual configuración sin valores cargados' onclick='duplicar(event)' value='Duplicar'>";
+			<form id='fusionarCat'>
+				<h2>Fusionar Categoria: <span id="nom"></span> a:</h2>
+				<input type='hidden' name='idcat'>
+				<div>La categoria fusionada ya no será visible y sus puntos serán asignados a su capa destino</div>
+				<select name='idcatDest'>
+					<option>-elegir una categoria-</option>
+				</select>
+				<br>
+				<input type='button' name='accion' value='fusionar' onclick='enviarFusion();'>
+				<input type='button' name='accion' value='cancelar' onclick='this.parentNode.style.display="none";'>
+			</form>
 			
-			echo "<br>";
-			echo "<input type='hidden' name='actividad' id='actividad' value='$ID'>";	
-					
-			foreach($Contenido as $k => $v){
-				//echo $Tabla[$k]['Comment'].PHP_EOL;
-				if($k=='imx0'){continue;}
-				if($k=='imxF'){continue;}
-				if($k=='imy0'){continue;}
-				if($k=='imyF'){continue;}
-				if($k=='abierta'){continue;}
+							
+			<form id='config' method='post' action='' onsubmit='enviarFormulario(event);'>
+				<input type='hidden' name='actividad' id='actividad' value='<?php echo $ID;?>'>
+				<input type='hidden' name='accion' value='guardar'>
+				<input type='submit' value='guardar cambios'>
+				<input type='button' 
+					title='Al publicarse una actividad, permite la inscripción de participantes y la carga de datos' 
+					value='Publicar'
+					onclick='publicarActividad(event);'
+				>
+				<input type='hidden' name='accionpub' value=''>
 				
-				if(substr($k,0,3)!='zz_'&&$k!='id'&&$k!='geometria'&&$k!='GEO'){
-					echo "<div class='emasc'>";
-					if(isset($Tabla[$k])){
-						echo "<label id='L_$k'>".$Tabla[$k]['Comment']."</label>";
-						
-						if($Tabla[$k]['Type']=='tinyint(1)'){
-							if($v=='1'){$s="checked";}else{$s='';}		
-							echo "<input type='hidden' name='$k' id='C_$k' value='$v'>";
-							echo "<input $s type='checkbox' value='$v' campo='$k' onclick='check(this);'>";							
-						}elseif($Tabla[$k]['Type']=='date'){
-							echo "<input type='hidden' name='$k' id='C_$k' value='$v'>";
-							echo "<input class='dia' campo='$k' id='C_".$k."_d' value='".dia($v)."' onchange='fechar(this);'>-";					
-							echo "<input class='mes' campo='$k' id='C_".$k."_m' value='".mes($v)."' onchange='fechar(this);'>-";			
-							echo "<input class='ano' campo='$k' id='C_".$k."_a' value='".ano($v)."' onchange='fechar(this);'> ";			
-						
-						}elseif($Tabla[$k]['Type']=='text'){
-							echo "<textarea id='C_$k' name='$k'>$v</textarea>";
-							
-						}elseif($Tabla[$k]['Type']=='TablaHija'){
-						
-							echo "<input id='H_$k' name='' value='-agregar nuevo-' onclick='validarContenido(this);'>";
-							echo "<input campo='nombre' accion='agrega' type='button' id='B_$k' onclick='crearRegHijo(this)' value='+'>";
-							
-							echo "<table id='T_$k'>";
-							echo "<tr>";
-								echo "<td>N</td>";
-								foreach(reset($v) as $ck => $cv){
-									if(substr($ck,0,2)!='id'&&substr($ck,0,3)!='zz_'){
-										echo "<td>".$ck."</td>";
-									}
-								}
-								echo "<td>cant</td>";
-								echo "<td>editar</td>";
-								echo "<td>fusionar</td>";
-								echo "<td>filtrar</td>";
-							echo" </tr>";
-							$nn=0;
-							unset($ncat);
-							foreach($v as $cat){
-								if($cat['zz_fusionadaa']==0){
-								$nn++;
-								$ncat[$nn]['id']=$cat['id'];
-								$ncat[$nn]['nom']=$cat['nombre'];
-								$icat[$cat['id']]=$nn;
-								}
-							}
-							$nn=0;
-							foreach($v as $cat){
-								if($cat['zz_fusionadaa']==0){
-									$nn++;
-									$nnn=$nn;
-								}else{
-									$nnn='';
-								}
-								echo "<tr>";								
-								echo "<td>$nnn</td>";
-								foreach($cat as $ck => $cv){
-									$val=$cv;
-									if(substr($ck,0,2)!='id'&&substr($ck,0,3)!='zz_'){
-										if(substr($ck,0,3)=='CO_'){
-											$val="<div style='width:30px;height:10px;background-color:$cv;'></div>";
-										}
-										if($cat['zz_fusionadaa']!=0
-											&& ($ck=='orden' || substr($ck,0,3)=='CO_')
-										){
-											$val='-';
-										}
-									echo "<td>$val</td>";
-									}
-								}
-								echo "<td>".$Contenido['categoriaspuntos'][$cat['id']]."</td>";
-								echo "<td><a target='_blank' href='agrega_f.php?salida=actividad_config&salidaid=".$Actividad."&tabla=".$k."&accion=cambia&id=".$cat['id']."' >editar</a></td>";
-								echo "<td>";
+				<input type='button' 
+					title='Al eliminarse una actividad, esta se enviará a la papelera, no estará visible para ningún usuario' 
+					id='elim' value='Eliminar' 
+					onclick='eliminarActividad(event);'
+				>
+				<input type='hidden' name='accionelim' value=''>
+				
+				<input type='submit' title='Al duplicarse se generará una nueva actividad con igual configuración sin valores cargados' onclick='duplicar(event)' value='Duplicar'>
+				
+				<input type='button' onclick='hacerRectangulo()' value='definir area rectangular'>
+				<input type='button' onclick='hacerPoligono()' value='definir area de poligono'>
+				
+				<br>
+				<input type='hidden' name='actividad' id='actividad' value='<?php echo $ID;?>'>
+				<input type='hidden' id='C_x0' name='x0' value=''>
+				<input type='hidden' id='C_y0' name='y0' value=''>
+				<input type='hidden' id='C_xF' name='xF' value=''>
+				<input type='hidden' id='C_yF' name='yF' value=''>
+				<input type='hidden' id='C_geometria' name='geometria' value=''>
+				
+				<div class='emasc'>
+					<label id='L_resumen'>nombre o resumen de la actividad</label>
+					<input id='C_resumen' name='resumen' value=''>
+				</div>
 								
-									if($cat['zz_fusionadaa']!=0){// las categorias ya fusionadas se desfusionan antes de generar nuevas fusiones.
-										$ns=$icat[$cat['zz_fusionadaa']];
-										
-										echo "<input class='fusion' type='button' onclick='liberarFusionCategoria(this,".$cat['id'].");' value='liberar de ".$ns."'>";
-									}elseif($Contenido['categoriaspuntos'][$cat['id']]==0){ //las categorias sin puntos no merecen ser fusionadas
-										echo "sin puntos";
-									}else{
-										echo "<select Corigen='".$cat['id']."' class='fusion' onchange='fusionarCategoriaA(this)'>";
-										echo "<option value='0'>-fusionar a-</option>";
-										foreach ($ncat as $n => $a){
-											if($a['id']==$cat['id']){continue;}
-											if($cat['zz_fusionadaa']==$a['id']){$s=selected;}else{$s='';}
-											echo "<option $s value='".$a['id']."'>".$n. " - " . $a['nom']."</option>";
-										}
-										echo "</select>";
-									}
-								echo "</td>";
-								echo "<td>";
-									if($Contenido['categoriaspuntos'][$cat['id']]>0){
-										echo "<input type='radio' name='filtro' value='male' onChange='filtrarmapa(\"".$cat['id']."\");'>";
-									}
-								echo "</td>";
-								echo" </tr>";
-							}
-							echo "</table>";
-						}else{
-							echo "<input id='C_$k' name='$k' value='$v'>";
-						}
-					}else{
-						echo "<label>$k</label><p>$v</p>";
-					}
-					echo "</div>";
-					if($Tabla[$k]['Type']=='TablaHija'){echo "<br>";}
-				}
-			}
-			echo "</form>";				
+				<div class='emasc'>
+					<label id='L_nivel'>nivel academico (grado, posgrado, secundario)</label>
+					<input id='C_nivel' name='nivel' value=''>
+				</div>
 				
-			$datosargumentacion = actividadesconsulta($ID);
-			
-			echo "</div>";
-		}
+				<div class='emasc'>
+					<label id='L_desde'> Fecha desde la cual la actividad se encuentra activa</label>
+					<input type='hidden' name='desde' id='C_desde' value='0000-00-00'>
+					<input class='dia' campo='desde' id='C_desde_d' value='00' onchange='fechar(this);'>-<input class='mes' campo='desde' id='C_desde_m' value='00' onchange='fechar(this);'>-<input class='ano' campo='desde' id='C_desde_a' value='0000' onchange='fechar(this);'> 
+				</div>
+				
+				<div class='emasc'>
+					<label id='L_hasta'> Fecha hasta la cual la actividad se encuentra activa</label>
+					<input type='hidden' name='hasta' id='C_hasta' value='0000-00-00'>
+					<input class='dia' campo='hasta' id='C_hasta_d' value='00' onchange='fechar(this);'>-<input class='mes' campo='hasta' id='C_hasta_m' value='00' onchange='fechar(this);'>-<input class='ano' campo='hasta' id='C_hasta_a' value='0000' onchange='fechar(this);'> 
+				</div>
+				
+				<div class='emasc'>
+					<label id='L_consigna'>Copia textual de la consigna expresada a los estudiantes.</label>
+					<textarea id='C_consigna' name='consigna'></textarea>
+				</div>
 
+				
+				<div class='emasc'>
+					<h2>
+						<label id='L_adjuntosAct'>La actividad permite adjuntos y links</label>
+						<input type='hidden' name='adjuntosAct' id='C_adjuntosAct' value=''>
+						<input checked type='checkbox' campo='adjuntosAct' onclick='check(this);'>
+					</h2>
+				
+				
+					<div class='emasc'>
+						<label id='L_adjuntosDat'>Que debe adjuntar o vincular el participante</label>
+						<input id='C_adjuntosDat' name='adjuntosDat' value=''>
+					</div>
+					
+					<div class='emasc'>
+						<label id='L_adjuntosExt'>Permite vínculos externos</label>
+						<input type='hidden' name='adjuntosExt' id='C_adjuntosExt' value=''>
+						<input  type='checkbox' campo='adjuntosExt' onclick='check(this);'>
+					</div>
+					
+				</div>
+				
+				<br>
+				
+				<div class='emasc'>
+					<h2>
+						<label id='L_valorAct'>La actividad permite cargas valores numéricos</label>
+						<input type='hidden' name='valorAct' id='C_valorAct' value=''>
+						<input  type='checkbox' campo='valorAct' onclick='check(this);'>
+					</h2>
+					<div class='emasc'>
+						<label id='L_valorDat'>Significado del valor numérico cargado</label>
+						<input id='C_valorDat' name='valorDat' value=''>
+					</div>
+					
+					<div class='emasc'>
+						<label id='L_valorUni'>Unidad de medida para el valor numérico</label>
+						<input id='C_valorUni' name='valorUni' value=''>
+					</div>
+				</div>
+				
+				<br>
+				
+				<div class='emasc'>
+					<h2>
+						<label id='L_textobreveAct'>La actividad permite cargar textos breves</label>
+						<input type='hidden' name='textobreveAct' id='C_textobreveAct' value=''>
+						<input checked type='checkbox' campo='textobreveAct' onclick='check(this);'>
+					</h2>
+					<div class='emasc'>
+						<label id='L_textobreveDat'>Tipo de dato capturado el texto breve</label>
+						<input id='C_textobreveDat' name='textobreveDat' value=''>
+					</div>
+				</div>
+				
+				<br>
+				
+				<div class='emasc'>
+					<h2>
+					<label id='L_textoAct'>La actividad permite cargar textos extensos</label>
+					<input type='hidden' name='textoAct' id='C_textoAct' value=''>
+					<input checked type='checkbox' campo='textoAct' onclick='check(this);'>
+					</h2>
+					<div class='emasc'>
+						<label id='L_textoDat'>El tipo de dato a capturar por el texto extenso</label>
+						<input id='C_textoDat' name='textoDat' value=''>
+					</div>
+					
+				</div>
+				
+				<br>
+				
+				<div class='emasc'>
+					<h2>
+					<label id='L_categAct'>La actividad permite cargar categorías</label>
+					<input type='hidden' name='categAct' id='C_categAct' value='1'>
+					<input checked type='checkbox' value='1' campo='categAct' onclick='check(this);'>
+					</h2>
+					<div class='emasc'>
+					<label id='L_categDat'>Criterio de categorización</label>
+					<input id='C_categDat' name='categDat' value=''>
+					</div><div class='emasc'>
+						<label id='L_categLib'>Categorías libre. permite crear nuevas</label>
+						<input type='hidden' name='categLib' id='C_categLib' value='0'>
+						<input  type='checkbox' value='0' campo='categLib' onclick='check(this);'>
+					</div>
+					<div class='emasc'>
+						<label id='L_ACTcategorias'>Menú de categorias</label>
+						<input id='H_ACTcategorias' name='' value='-agregar nuevo-' onclick='validarContenido(this);'>
+						<input campo='nombre' accion='agrega' type='button' id='B_ACTcategorias' onclick='crearRegHijo(this)' value='+'>
+						<table id='T_ACTcategorias'>
+							<tr><td>N</td><td>nombre</td><td class='desc'>descripcion</td><td>orden</td><td>color</td><td>cant</td><td>fusionar</td><td>ver</td> </tr>
+						</table>
+					</div>
+				</div>
+				
+				<br>
+				
+				<div class='emasc'>
+					<label id='L_objeto'> el Objeto de estudio, relevamiento o captura.</label>
+					<br>
+					<textarea id='C_objeto' name='objeto'></textarea>
+				</div>
+				
+				
+				<div class='emasc'>
+					<label id='L_resultados'>resultados obtenidos</label>
+					<br>
+					<textarea id='C_resultados' name='resultados'></textarea>
+				</div>
+				
+				<div class='emasc'>
+					<label id='L_marco'>marco de la actividad</label>
+					<br>
+					<textarea id='C_marco' name='marco'></textarea>
+				</div>
 
-		?>
-	
+				
+			</form>
+		</div>	
 	</div></div>
 	
+
+	</div></div>
+
+<script type='text/javascript'>
+	
+	_Aid='<?php echo $ID;?>';
+	_Adata={};
+	function consultarActividad(){		
+		_datos={
+			'actividad':_Aid				
+		};
+		
+		$.ajax({
+			data: _datos,
+			url:   './ACT_consulta.php',
+			type:  'post',
+			success:  function (response){
+				
+				var _res = $.parseJSON(response);
+				//console.log(_res);
+				
+				for(_nm in _res.mg){
+					alert(_res.mg[_nm]);
+				} 
+				if(_res.res=='exito'){
+					console.log(_res);
+					_Adata=_res.data[_Aid];
+					cargarActividad();
+				}else{
+					alert('ocurrió algún error en la consulta');
+				}
+				
+			}
+		})
+	}
+	
+	consultarActividad();
+	
+	function cargarActividad(){
+		
+		_form=document.querySelector('#page form#config');
+		
+		_form.querySelector('#C_resumen').value=_Adata.resumen;
+		
+		_form.querySelector('#C_nivel').value=_Adata.nivel;
+		
+		_form.querySelector('#C_desde').value=_Adata.desde;
+		_dd=_Adata.desde.split('-');
+		_form.querySelector('#C_desde_a').value=_dd[0];
+		_form.querySelector('#C_desde_m').value=_dd[1];
+		_form.querySelector('#C_desde_d').value=_dd[2];
+		
+		_form.querySelector('#C_hasta').value=_Adata.hasta;
+		_hh=_Adata.hasta.split('-');
+		_form.querySelector('#C_hasta_a').value=_hh[0];
+		_form.querySelector('#C_hasta_m').value=_hh[1];
+		_form.querySelector('#C_hasta_d').value=_hh[2];
+		
+		_form.querySelector('#C_consigna').value=_Adata.consigna;
+		
+		_form.querySelector('#C_x0').value=_Adata.x0;
+		_form.querySelector('#C_y0').value=_Adata.y0;
+		_form.querySelector('#C_xF').value=_Adata.xF;
+		_form.querySelector('#C_yF').value=_Adata.yF;
+		_form.querySelector('#C_geometria').value=_Adata.geometria;
+		
+		_form.querySelector('#C_adjuntosAct').value=_Adata.adjuntosAct;
+		if(_Adata.adjuntosAct==1){
+			_form.querySelector('input[campo="adjuntosAct"]').parentNode.parentNode.setAttribute('estado','activo');
+			_form.querySelector('input[campo="adjuntosAct"]').checked=true;
+		}else{
+			_form.querySelector('input[campo="adjuntosAct"]').parentNode.parentNode.setAttribute('estado','inactivo');
+			_form.querySelector('input[campo="adjuntosAct"]').checked=false;
+		}		
+		_form.querySelector('#C_adjuntosDat').value=_Adata.adjuntosDat;
+		
+		
+		_form.querySelector('#C_valorAct').value=_Adata.valorAct;
+		if(_Adata.valorAct==1){
+			_form.querySelector('input[campo="valorAct"]').parentNode.parentNode.setAttribute('estado','activo');
+			_form.querySelector('input[campo="valorAct"]').checked=true;
+		}else{
+			_form.querySelector('input[campo="valorAct"]').parentNode.parentNode.setAttribute('estado','inactivo');
+			_form.querySelector('input[campo="valorAct"]').checked=false;
+		}		
+		_form.querySelector('#C_valorDat').value=_Adata.valorDat;
+		_form.querySelector('#C_valorUni').value=_Adata.valorUni;
+			
+				
+		_form.querySelector('#C_textobreveAct').value=_Adata.textobreveAct;
+		if(_Adata.textobreveAct==1){
+			_form.querySelector('input[campo="textobreveAct"]').parentNode.parentNode.setAttribute('estado','activo');
+			_form.querySelector('input[campo="textobreveAct"]').checked=true;
+		}else{
+			_form.querySelector('input[campo="textobreveAct"]').parentNode.parentNode.setAttribute('estado','inactivo');
+			_form.querySelector('input[campo="textobreveAct"]').checked=false;
+		}		
+		_form.querySelector('#C_textobreveDat').value=_Adata.textobreveDat;
+		
+		
+		_form.querySelector('#C_textoAct').value=_Adata.textoAct;
+		if(_Adata.textoAct==1){
+			_form.querySelector('input[campo="textoAct"]').parentNode.parentNode.setAttribute('estado','activo');
+			_form.querySelector('input[campo="textoAct"]').checked=true;
+		}else{
+			_form.querySelector('input[campo="textoAct"]').parentNode.parentNode.setAttribute('estado','inactivo');
+			_form.querySelector('input[campo="textoAct"]').checked=false;
+		}		
+		_form.querySelector('#C_textoDat').value=_Adata.textoDat;
+
+
+		_form.querySelector('#C_categAct').value=_Adata.categAct;
+		if(_Adata.categAct==1){
+			_form.querySelector('input[campo="categAct"]').parentNode.parentNode.setAttribute('estado','activo');
+			_form.querySelector('input[campo="categAct"]').checked=true;
+		}else{
+			_form.querySelector('input[campo="categAct"]').parentNode.parentNode.setAttribute('estado','inactivo');
+			_form.querySelector('input[campo="categAct"]').checked=false;
+		}		
+		_form.querySelector('#C_categDat').value=_Adata.categDat;
+		
+		
+		if(_Adata.categLib==1){
+			_form.querySelector('input[campo="categLib"]').checked=true;
+		}else{
+			_form.querySelector('input[campo="categLib"]').checked=false;
+		}		
+		_form.querySelector('#C_categLib').value=_Adata.categLib;		
+		
+		_n=0;
+		for(_idc in _Adata.categorias){
+			
+		
+			_dat=_Adata.categorias[_idc];
+			if(_dat.zz_fusionadaa>0){_n++;}
+			
+			
+			_fila=document.createElement('tr');
+			_fila.setAttribute('idcat',_idc);
+			
+			if(_dat.zz_fusionadaa>'0'){_fila.setAttribute('fusionada','si');}
+			
+			document.querySelector('#T_ACTcategorias').appendChild(_fila);
+			
+			_cel=document.createElement('td');
+			if(_dat.zz_fusionada>'0'){_cel.innerHTML=_n;}
+			_fila.appendChild(_cel);
+			
+			_cel=document.createElement('td');
+			_cel.setAttribute('class','link');
+			_cel.setAttribute('campo','nombre');
+			_cel.setAttribute('onclick','formularCategoria(this.parentNode.getAttribute("idcat"))');
+			_cel.innerHTML=_dat.nombre;
+			_fila.appendChild(_cel);
+			
+			_cel=document.createElement('td');
+			_cel.setAttribute('campo','descripcion');
+			_cel.innerHTML=_dat.descripcion;
+			if(_dat.zz_fusionadaa>'0'){
+				_cel.innerHTML="fusinada a "+_Adata.categorias[_dat.zz_fusionadaa].nombre;
+			}
+			
+			_fila.appendChild(_cel);
+			
+			_cel=document.createElement('td');
+			_cel.innerHTML=Math.round(_dat.orden);
+			_cel.setAttribute('campo','orden');
+			_fila.appendChild(_cel);
+
+			_cel=document.createElement('td');
+			_cel.innerHTML='<div style="background-color:'+_dat.CO_color+'">';
+			_cel.setAttribute('campo','CO_color');
+			_fila.appendChild(_cel);
+			
+			_cel=document.createElement('td');
+			_cel.innerHTML=_dat.cant;
+			_fila.appendChild(_cel);
+			
+			
+			
+			_cel=document.createElement('td');
+			_cel.innerHTML="<a onclick='fusionarCategoriaA(this)'>a..</a>";
+			
+			if(_dat.zz_fusionadaa>'0'){
+				_cel.innerHTML="<a onclick='liberarFusionCategoria(this)'>liberar</a>";
+			}
+			_fila.appendChild(_cel);
+			
+			_cel=document.createElement('td');
+			_cel.innerHTML="<input type='radio' name='filtro' value='male' onChange='filtrarmapa(\""+_idc+"\");'>";
+			_fila.appendChild(_cel);
+		}
+			
+			
+				
+		_form.querySelector('#C_objeto').value=_Adata.objeto;
+		_form.querySelector('#C_resultados').value=_Adata.resultados;
+		_form.querySelector('#C_marco').value=_Adata.marco;
+		
+		document.getElementById('mapa').src='./MAPAconfig.php?actividad='+_Aid+'&consulta=creararea';
+	}
+		
+	function enviarFormulario(_event){
+		_event.preventDefault();
+		
+		_form=document.querySelector('form#config');
+		_imps=_form.querySelectorAll('input, textarea, select');
+		_params={};
+		for(_ni in _imps){
+			if(typeof _imps[_ni] != 'object'){continue;}
+			_campo=_imps[_ni].getAttribute('name');
+			if(_campo==''){continue;}
+			if(_campo==null){continue;}
+			_valor=_imps[_ni].value;
+			_params[_campo]=_valor;
+		}
+		$.ajax({
+			data: _params,
+			url:   './ACT_ed_config.php',
+			type:  'post',
+			success:  function (response){
+				
+				var _res = $.parseJSON(response);
+				//console.log(_res);
+				
+				for(_nm in _res.mg){
+					alert(_res.mg[_nm]);
+				} 
+				if(_res.res=='exito'){
+					alert('cambios guardados');
+					console.log(_res);
+					//window.location.reload();
+				}else{
+					alert('ocurrió algún error en la consulta');
+				}
+				
+			}
+		})
+		
+		
+	}
+	
+	function publicarActividad(_event){
+		if(confirm('Al publicarse una actividad esta pasa a ser visible por todos los usuarios. Si un usuario ingresa entre las fechas de inicio y fin, podrá cargar datos \n ¿Confirmás publicar esta actividad?')){
+			document.querySelector('form#config input[name="accionpub"]').value='Publicar';
+			enviarFormulario(_event);
+		}
+	}
+	
+	function eliminarActividad(_event){
+		if(confirm('Al eliminarse una actividad, esta se enviará a la papelera, no estará visible para ningún usuario. \n ¿Confirmás eliminar esta actividad?')){
+			document.querySelector('form#config input[name="accionelim"]').value='Confirmo Eliminar';
+			enviarFormulario(_event);
+		}
+	}
+
+</script>
+	
+	
+		
 	<script type='text/javascript'>
+		function hacerPoligono(){
+			_cont=document.getElementById('mapa').contentWindow;
+			_cont.addInteractionPol();
+			//_cont.mapa.removeInteraction(draw);
+			//_cont.mapa.addInteraction(drawPol);		
+		}
+		function hacerRectangulo(){
+			
+			_cont=document.getElementById('mapa').contentWindow;
+			_cont.addInteraction();
+			//_cont.mapa.removeInteraction(draw);
+			//_cont.mapa.addInteraction(drawPol);		
+		}
+		
 	
 		_Aid='<?php echo $ID;?>';
 		
@@ -589,7 +905,6 @@ label.upload:hover{
 						alert(_res.mg[_nm]);
 					} 
 					if(_res.res=='exito'){
-						console.log(_res);
 						window.location.assign('./actividad_config.php?actividad='+_res.data.nid);
 					}else{
 						alert('ocurrió algún error en la consulta');
@@ -602,12 +917,6 @@ label.upload:hover{
 	
 	<script type='text/javascript'>
 		
-		var _Adat={
-			'x0': '<?php echo $Contenido['x0'];?>',
-			'y0': '<?php echo $Contenido['y0'];?>',
-			'xF': '<?php echo $Contenido['xF'];?>',
-			'yF': '<?php echo $Contenido['yF'];?>'			
-		}
 		function validarContenido(_this){
 			if(_this.value=='-agregar nuevo-'){
 				_this.setAttribute('value','');
@@ -616,23 +925,58 @@ label.upload:hover{
 		
 		
 		function fusionarCategoriaA(_this){//completa formulario de fusion de categorías y lo envía
-			if(_this.value>0){
-				console.log(_this.value);
-				document.getElementById('InModFusionDestino').value=_this.value;
-				document.getElementById('InModFusionOrigen').value=_this.getAttribute('Corigen');
+			_idcat=_this.parentNode.parentNode.getAttribute('idcat');
+			if(_idcat>0){
+				
+				document.getElementById('fusionarCat').style.display='block';
+				console.log(_idcat);
+				_sel=document.querySelector('#fusionarCat input[name="idcat"]').value=_idcat;
+				_sel=document.querySelector('#fusionarCat select');
+				_sel.innerHTML='<option>-elegir-</option>';
+				for(_cid in _Adata.categorias){
+					if(_cid==_idcat){continue;}
+					_op=document.createElement('option');
+					_op.value=_cid;
+					_op.innerHTML=_Adata.categorias[_cid].nombre;
+					_sel.appendChild(_op);
+				}
+				
 				document.getElementById('formFusionMod').submit();
 				_this.parentNode.innerHTML='--fusionado--';
 				
 			}
 		}
 
+	
 		function liberarFusionCategoria(_this,_origen){//completa formulario de fusion de categorías y lo envía
-			if(_origen>0){
-				document.getElementById('InModFusionDestino').value='0';
-				document.getElementById('InModFusionOrigen').value=_origen;
-				document.getElementById('formFusionMod').submit();
-				_this.parentNode.innerHTML='--liberado--';
+			if(!confirm('¿Segure de liberar esta categoría?')){return;}
+			_param={
+				'idact':_Aid,
+				'idcat':_this.parentNode.parentNode.getAttribute("idcat"),
+				'idcatDest':''
 			}
+			$.ajax({
+				data: _param,
+				url:   './ACT_ed_fusion.php',
+				type:  'post',
+				error:function (response){alert('error al conectarse al servidor');},
+				success:  function (response){
+					var _res = $.parseJSON(response);
+					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					} 
+
+					if(_res.res!='exito'){alert('ocurrió algún error en la consulta');return;}
+
+					_Adata.categorias[_res.data.id]=_res.data;
+					console.log('table#T_ACTcategorias tr[idcat="'+_res.data.id+'"]');
+					_fila=document.querySelector('table#T_ACTcategorias tr[idcat="'+_res.data.id+'"]');
+					document.querySelector('form#categoria').style.display='none';					
+				}
+			})
+		
+			
 		}			
 	</script>
 	
@@ -640,7 +984,8 @@ label.upload:hover{
 
 		function filtrarmapa(_catid){
 
-			document.getElementById('mapa').src='./MAPAactividad.php?actividad=<?php echo $Actividad;?>&consulta=creararea&filtrosi[]=categoria__'+_catid;
+			//document.getElementById('mapa').src='./MAPAactividad.php?actividad=<?php echo $Actividad;?>&consulta=creararea&filtrosi[]=categoria__'+_catid;
+			document.getElementById('mapa').src='./MAPAconfig.php?actividad=<?php echo $Actividad;?>&consulta=creararea&filtrosi[]=categoria__'+_catid;
 			
 			window.scrollTo(0,0);			
 		}
@@ -653,6 +998,17 @@ label.upload:hover{
 			}else{
 				document.getElementById('C_'+_c).value=0;
 			}
+			
+			if(_this.parentNode.tagName.toLowerCase()=='h2'){
+				if(_this.checked){
+					_this.parentNode.parentNode.setAttribute('estado','activo');
+				}else{
+					_this.parentNode.parentNode.setAttribute('estado','inactivo');
+				}	
+				
+			}
+			
+			
 		}
 
 		function fechar(_this){// carga el valor en el campo oculto de fecha completa
@@ -680,6 +1036,174 @@ label.upload:hover{
 			
 			_form.submit();
 		}	
+		
+		
+		
+		function formularCategoria(_idcat){
+			_form=document.querySelector('form#categoria');
+			_form.style.display='block';
+			_cdat=_Adata.categorias[_idcat];
+			_form.querySelector('input[name="nombre"]').value=_cdat.nombre;
+			_form.querySelector('textarea[name="descripcion"]').value=_cdat.descripcion;
+			_form.querySelector('input[name="idcat"]').value=_idcat;
+			_co=_cdat.CO_color.replace('rgb(','');
+			_co=_co.replace(')','');
+			_co=_co.split(',');
+			_hex=rgbToHex(parseInt(_co[0]), parseInt(_co[1]), parseInt(_co[2]));
+			_form.querySelector('input[name="CO_color"]').value=_hex;
+			_form.querySelector('input[name="orden"]').value=_cdat.orden;
+			if(_cdat.cant>0){
+				_form.querySelector('input[value="eliminar"]').setAttribute('disabled','disabled');
+			}else{
+				_form.querySelector('input[value="eliminar"]').removeAttribute('disabled');
+			}
+			
+		}
+		
+		
+		
+		function eliminarCategoria(){
+			if(!confirm('Eliminamos esta categoría?')){return;}
+			_form=document.querySelector('form#categoria');
+			
+			_param={
+				'idact':_Aid,
+				'idcat':_form.querySelector('input[name="idcat"]').value
+			}
+			
+			$.ajax({
+				data: _param,
+				url:   './ACT_elim_categoria.php',
+				type:  'post',
+				error:function (response){alert('error al conectarse al servidor');},
+				success:  function (response){
+					var _res = $.parseJSON(response);
+					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					} 
+					
+					if(_res.res!='exito'){alert('ocurrió algún error en la consulta');return;}
+					
+					delete(_Adata.categorias[_res.data.id]);
+					
+					_fila=document.querySelector('table#T_ACTcategorias tr[idcat="'+_res.data.id+'"]');
+					_fila.parentNode.removeChild(_fila);
+					
+					
+					document.querySelector('form#categoria').style.display='none';
+				}
+			})
+			
+		}
+		
+		
+		
+		
+		function enviarFusion(){
+			_form=document.querySelector('form#fusionarCat');
+			_form.style.display='none';
+			
+			_param={
+				'idact':_Aid,
+				'idcat':_form.querySelector('[name="idcat"]').value,
+				'idcatDest':_form.querySelector('[name="idcatDest"]').value
+			}
+			$.ajax({
+				data: _param,
+				url:   './ACT_ed_fusion.php',
+				type:  'post',
+				error:function (response){alert('error al conectarse al servidor');},
+				success:  function (response){
+					var _res = $.parseJSON(response);
+					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					} 
+
+					if(_res.res!='exito'){alert('ocurrió algún error en la consulta');return;}
+
+					_Adata.categorias[_res.data.id]=_res.data;
+					console.log('table#T_ACTcategorias tr[idcat="'+_res.data.id+'"]');
+					_fila=document.querySelector('table#T_ACTcategorias tr[idcat="'+_res.data.id+'"]');
+					_fila.querySelector('td[campo="nombre"]').innerHTML=_res.data.nombre;
+					_fila.querySelector('td[campo="descripcion"]').innerHTML=_res.data.descripcion;
+					_fila.querySelector('td[campo="CO_color"] div').style.backgroundColor=_res.data.CO_color;
+					_fila.querySelector('td[campo="orden"]').innerHTML=_res.data.orden;
+
+					document.querySelector('form#categoria').style.display='none';					
+				}
+			})
+		}
+		
+		
+		function enviarCategoria(){
+			_form=document.querySelector('form#categoria');
+			_c=hexToRgb(_form.querySelector('input[name="CO_color"]').value);
+			_color='rgb('+_c.r+','+_c.g+','+_c.b+')';
+
+			_param={
+				'idact':_Aid,
+				'nombre':_form.querySelector('input[name="nombre"]').value,
+				'idcat':_form.querySelector('input[name="idcat"]').value,
+				'descripcion':_form.querySelector('textarea[name="descripcion"]').value,
+				'CO_color':_color,
+				'orden':_form.querySelector('input[name="orden"]').value,
+			}
+
+			$.ajax({
+				data: _param,
+				url:   './ACT_ed_categoria.php',
+				type:  'post',
+				error:function (response){alert('error al conectarse al servidor');},
+				success:  function (response){
+					var _res = $.parseJSON(response);
+					//console.log(_res);
+					for(_nm in _res.mg){
+						alert(_res.mg[_nm]);
+					} 
+
+					if(_res.res!='exito'){alert('ocurrió algún error en la consulta');return;}
+
+					_Adata.categorias[_res.data.id]=_res.data;
+					console.log('table#T_ACTcategorias tr[idcat="'+_res.data.id+'"]');
+					_fila=document.querySelector('table#T_ACTcategorias tr[idcat="'+_res.data.id+'"]');
+					_fila.querySelector('td[campo="nombre"]').innerHTML=_res.data.nombre;
+					_fila.querySelector('td[campo="descripcion"]').innerHTML=_res.data.descripcion;
+					_fila.querySelector('td[campo="CO_color"] div').style.backgroundColor=_res.data.CO_color;
+					_fila.querySelector('td[campo="orden"]').innerHTML=_res.data.orden;
+
+					document.querySelector('form#categoria').style.display='none';					
+				}
+			})
+		}
+		
+		
+		
+		function hexToRgb(hex) {
+		    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+		    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+		    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+		        return r + r + g + g + b + b;
+		    });
+		
+		    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		    return result ? {
+		        r: parseInt(result[1], 16),
+		        g: parseInt(result[2], 16),
+		        b: parseInt(result[3], 16)
+		    } : null;
+		}
+		
+		function componentToHex(c) {
+		    var hex = c.toString(16);
+		    return hex.length == 1 ? "0" + hex : hex;
+		}
+		
+		function rgbToHex(r, g, b) {
+		    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+		}
+
 	</script>
 
 	
@@ -700,6 +1224,6 @@ label.upload:hover{
 	</form>
 	
 	<?php
-include('./_serverconfig/pie.php');
-?>
+	include('./_serverconfig/pie.php');
+	?>
 </body>
