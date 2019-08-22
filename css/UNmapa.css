@@ -381,6 +381,7 @@ p#desarrollo{
 	position:relative;
 	left:0px;
 	top:0px;
+	text-align: left;
 }
 #mapa {
 	border-left:none;	
@@ -458,6 +459,11 @@ p#desarrollo{
     width: 6px;
 }
 
+#puntosdeactividad li[filtrob='nover']{
+	display:none;
+}
+
+
 .autor{
 	font-size:9px;
 	font-style:italic;
@@ -472,6 +478,7 @@ span.textobreve{
 	height:12px;
 	max-width:70%;
 	overflow:hidden;
+	text-align: right;
 }
 
 span.menor{
