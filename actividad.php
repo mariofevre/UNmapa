@@ -3,16 +3,16 @@
 * actividad.php
 *
 * aplicación principal de intefaz, formulario de visualización y carga de nuevos puntos de relevamiento
+
 *  
 * @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
 * @subpackage 	actividad
 * @author     	Universidad Nacional de Moreno
 * @author     	<mario@trecc.com.ar>
-* @author    	http://www.uba.ar/
-* @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
+* @author    	https://github.com/mariofevre/UNmapa
 * @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
 * @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
-* @copyright	2015 Universidad de Buenos Aires
+* @copyright	2019 Universidad Nacional de Moreno
 * @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
@@ -28,7 +28,6 @@
 * 
 * Si usted no cuenta con una copia de dicha licencia puede encontrarla aquí: <http://www.gnu.org/licenses/>.
 */
-
 
 //if($_SERVER[SERVER_ADDR]=='192.168.0.252')ini_set('display_errors', '1');ini_set('display_startup_errors', '1');ini_set('suhosin.disable.display_errors','0'); error_reporting(-1);
 
@@ -138,7 +137,10 @@ if($RID>0){
 
 }
 
-?>	<title>UNmapa - Área de Trabajo</title>
+?>
+<!DOCTYPE html>
+<head>
+	<title>UNmapa - Área de Trabajo</title>
 	<?php include("./includes/meta.php");?>
 	<link href="css/treccppu.css" rel="stylesheet" type="text/css">
 	<link href="css/UNmapa.css" rel="stylesheet" type="text/css">
@@ -179,7 +181,7 @@ if($RID>0){
 	
 	
 	<script type="text/javascript">
-		_IdReg = '<?php echo $RID;?>';
+		var _IdReg = '<?php echo $RID;?>';
 	</script>
 
 	

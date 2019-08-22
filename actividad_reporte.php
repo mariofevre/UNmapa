@@ -1,19 +1,18 @@
 <?php 
 /**
-* actividad.php
+* actividad_reporte.php
 *
-* aplicación para cargar nuevos puntos de relevamiento
+* aplicación para visualizar registros en forma de reporte no interactivo
 *  
-* 
-* @package    	Plataforma Colectiva de Información Territorial: UBATIC2014
+* @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
 * @subpackage 	actividad
-* @author     	Universidad de Buenos Aires
+* @author     	Universidad Nacional de Moreno
 * @author     	<mario@trecc.com.ar>
-* @author    	http://www.uba.ar/
-* @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
+* @author    	https://github.com/mariofevre/UNmapa
+* @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
 * @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
-* @copyright	2015 Universidad de Buenos Aires
-* @copyright	esta aplicación se desarrollo sobre una publicación GNU (agpl) 2014 TReCC SA
+* @copyright	2019 Universidad Nacional de Moreno
+* @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
 * Este archivo es software libre: tu puedes redistriburlo 
@@ -475,6 +474,18 @@ span.ui-slider-handle:hover {
 		border-left:1px solid #000;
 	}
 	
+	#modelo{
+		display:none;
+	}
+	
+	.paquete[estado='0']{
+		display:none;
+	}	
+	
+	.registro[filtrob='nover']{
+		display:none;
+	}
+		
 	@media print {	
 			
 	   div.registro{page-exit-inside: avoid;}
@@ -498,9 +509,15 @@ span.ui-slider-handle:hover {
 	?>	
 	<div id="pageborde"><div id="page">
 		<h1>Actividad: <span class='resumen'><?php echo $Actividad['resumen'];?></span></h1>
-		<?php
 
-		echo " / <span class='menor'>web de acceso directo: <span class='resaltado'>http://190.111.246.33/UNmapa/actividad.php?actividad=$ID</span></span>";	
+		 / <span class='menor'>web de acceso directo: <span class='resaltado'>http://190.111.246.33/UNmapa/actividad.php?actividad=<?php echo $ID;?></span></span>
+		
+		<p id='consigna'></p>
+		<p id='marco'></p>
+		<p id='objeto'></p>
+				
+		<?php 
+		
 		if($RID>0){$cons='verpuntos';}else{$cons='marcarpuntos';}	
 		
 		//echo"<pre>";print_r($Actividad);echo"</pre>";
@@ -509,69 +526,158 @@ span.ui-slider-handle:hover {
 				echo "la actividad no fue llamada correctamnte";
 		}else{
 			
-			echo "<p>".$Actividad['consigna']."</p>";
-							
-			echo "<p>".$Actividad['marco']."</p>";
 			
-			echo "<p>".$Actividad['objeto']."</p>";
-			
-			if($Actividad['hasta']<=$HOY&&$Actividad['hasta']>'0000-00-00'){
-				$Stat='cerrada';
-			}else{
-				$Stat='abierta';
-			}
-					
-			echo "<p>Estado de la actividad: ".$Actividad['consigna']."</p>";
-			//echo "<pre>";print_r($Actividad);echo "</pre>";	
-			//echo "<pre>";print_r($Actividad['GEO']);echo "</pre>";		
-			foreach($Actividad['GEO'] as $idp => $valp){
-				//echo "<pre>";print_r( $valp);echo "</pre>";	
-				echo "<div class='registro'>";
-					echo "<div class='c1'>";
-						echo "<h1>id: $idp </h1>";
-						echo "<h2>por: ".$valp['Usuario']['nombre']." ".$valp['Usuario']['apellido']."  | ".$valp['fecha']."</h2>";
-						
-						if($Actividad['valorAct']==1){
-							echo "<h2>".$Actividad['valorDat']."</h2>";
-							echo "<p>".$valp['valor']." ".$Actividad['valorUNI']."</p>";
-						}
-		
-						if($Actividad['categAct']==1){
-							echo "<h2>".$Actividad['categDat']."</h2>";
-							echo "<p><div class='punto' style='background-color:".$valp['categoriaCo'].";border-color:".$valp['categoriaCo'].";'></div>".$valp['categoriaTx']."<br>".$valp['categoriaDes']."</p>";
-						}
-						
-						if($Actividad['textobreveAct']==1){
-							echo "<h2>".$Actividad['textobreveDat']."</h2>";
-							echo "<p>".$valp['textobreve']."</p>";
-						}
-						
-					echo "</div>";
-					
-					echo "<div class='c2'>";
-						if($Actividad['adjuntosAct']==1){
-							echo "<h2>".$Actividad['adjuntosDat']."</h2><img src='".$valp['link']."'>";
-						}
-					echo "</div>";
-						
-	 				if($Actividad['textoAct']==1){
-						echo "<h2>".$Actividad['textoDat']."</h2>";
-						echo $valp['texto'];
-					}
-				echo "</div>";
-
-			}
 		}
 		?>
 	
 	</div></div>
 
-<script type="text/javascript">
-
-	
-</script>
-
 <?php
 include('./_serverconfig/pie.php');
 ?>
+
+<div id='modelo' class="registro">
+	<div class="c1">
+		<h1>id: <span id='rid'></span></h1>
+		<h2>por: <span id='autor'></span> | <span id='fecha'></span></h2>
+		
+		
+		<div id='paqueteCategoria' class='paquete'>
+			<h2 id="categDat"></h2>
+			<div class="punto" style=""></div>
+			<span id='categoriatx'></span><br>
+		</div>
+		<div id='paqueteTextobreve' class='paquete'>
+			<h2 id='textobreveDat'></h2>
+			<p id='textobreve'></p>
+		</div>
+		<div id='paqueteValor' class='paquete'>
+			<h2 id='valorDat'></h2>
+			<p><span id='valor'></span><span id='valorUni'></span></p>
+		</div>
+	</div>
+	<div class="c2" id='paqueteAdjuntos'>
+		<h2 id='adjuntosDat'></h2>
+		<img id='archivoImg' src="">
+	</div>
+	<div id='paqueteTexto' class='paquete'>
+		<h2 id='textoDat'></h2>
+		<p id='texto'>
+	</div>
+</div>	
+	
+</div>
+<script type="text/javascript">
+
+	var _StatusEnvio='listo';
+	
+	var _Uid='<?php echo $Actividad;?>';
+	var _Aid='<?php echo $ID;?>';
+	var _Adata={};
+	var _Pdat={};
+	
+
+	function consultaActividad(){
+		if(_Aid<1){
+			document.querySeelctor('body').innerHTML+="<h1>la actividad no fue llamada correctamnte<'h1>";
+			return;
+		}		
+		
+		if(_StatusEnvio!='listo'){
+			alert('sistema ocupado, reintente en unos segundos');
+			console.log('el sistema de envió está acupado');
+			return;
+		}   
+		_datos={};
+		_datos["aid"]=_Aid;
+	
+		$.ajax({
+			data: _datos,
+			url:   'punto_consulta.php',
+			type:  'post',
+			success:  function (response){
+					var _res = $.parseJSON(response);
+					console.log(_res);
+					_Adata=_res.data.actividad;				
+					cargarActividad();
+					consultaRegistros();
+			}
+		})
+	}	
+	consultaActividad();
+	
+	
+	function cargarActividad(){		
+		document.querySelector('#consigna').innerHTML=_Adata.consigna;
+		document.querySelector('#marco').innerHTML=_Adata.marco;
+		document.querySelector('#objeto').innerHTML=_Adata.objeto;
+		
+		document.querySelector('#modelo #paqueteCategoria').setAttribute('estado',_Adata.categAct);
+		document.querySelector('#modelo #categDat').innerHTML=_Adata.categDat;
+		document.querySelector('#modelo #paqueteTextobreve').setAttribute('estado',_Adata.trextobreveAct);
+		document.querySelector('#modelo #textobreveDat').innerHTML=_Adata.textobreveDat;
+		document.querySelector('#modelo #paqueteTexto').setAttribute('estado',_Adata.textoAct);
+		document.querySelector('#modelo #textoDat').innerHTML=_Adata.textoDat;
+		document.querySelector('#modelo #paqueteValor').setAttribute('estado',_Adata.valorAct);
+		document.querySelector('#modelo #valorDat').innerHTML=_Adata.valorDat;
+		document.querySelector('#modelo #paqueteAdjuntos').setAttribute('estado',_Adata.adjuntosAct);
+		document.querySelector('#modelo #adjuntosDat').innerHTML=_Adata.adjuntosDat;
+	}
+	
+	function consultaRegistros(){
+		if(_StatusEnvio!='listo'){
+			alert('sistema ocupado, reintente en unos segundos');
+			console.log('el sistema de envió está acupado');
+			return;
+		}   
+		_datos={};
+		_datos["aid"]=_Aid;
+	
+		$.ajax({
+			data: _datos,
+			url:   'puntos_consulta.php',
+			type:  'get',
+			success:  function (response){
+					var _res = $.parseJSON(response);
+					console.log(_res);
+					_Pdat=_res;
+					mostrarPuntos();				
+					
+			}
+		})
+	}
+	
+	function mostrarPuntos(){
+		
+		for(_np in _Pdat.features){
+			_dat=_Pdat.features[_np].properties;
+			_clon = document.querySelector('#modelo').cloneNode(true);
+			_clon.removeAttribute('id');
+			document.querySelector('#page').appendChild(_clon);
+				
+			_clon.querySelector('#rid').innerHTML=_dat.id;
+			_clon.querySelector('#autor').innerHTML=_dat.nombreUsuario;
+			_clon.querySelector('#fecha').innerHTML=_dat.fecha;
+			_clon.querySelector('#valor').innerHTML=_dat.valor;
+			_clon.querySelector('#texto').innerHTML=_dat.texto;
+			
+			
+			_clon.querySelector('.punto').style.backgroundColor=_dat.style.color;
+			_clon.querySelector('.punto').style.borderColor=_dat.style.color;
+			_clon.querySelector('#categoriatx').innerHTML=_dat.categoriaNom;
+			
+			_clon.querySelector('#textobreve').innerHTML=_dat.categoriaNom;
+			
+			_clon.querySelector('#archivoImg').setAttribute('src',_dat.link);
+			
+		}
+		
+		
+		
+	}
+						
+		
+</script>
+
+
 </body>

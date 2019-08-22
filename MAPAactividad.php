@@ -518,7 +518,7 @@ $HOY=date("Y-m-d");
 		  	
 		  	parent._mapainicialCargado='si';		  	
 		  	if(parent._actividadConsultada=='si'){
-		  		//mostrarArea(parent._Adat);
+		  		//mostrarArea(parent._Adata);
 		  	}
 		  	
 		  	//consultaPunto();
@@ -597,9 +597,9 @@ $HOY=date("Y-m-d");
 				
 				//console.log(_features[_nn].getProperties());
 				if(_features[_nn].getProperties().categAct == 1){
-					_activ.innerHTML=_activ.innerHTML + _features[_nn].getProperties().categoriaNom;
+					_activ.innerHTML+='<span id="categoriatx">'+_features[_nn].getProperties().categoriaNom+'</span><span id="valortx" style="display:none;"></span>';
 				}else if(_features[_nn].getProperties().valorAct == 1){
-					_activ.innerHTML=_activ.innerHTML+_features[_nn].getProperties().valor;
+					_activ.innerHTML='<span id="valortx">'+_activ.innerHTML+_features[_nn].getProperties().valor+'</span><span id="categoriatx" style="display:none;"></span>';
 				}
 				
 				if(_features[_nn].getProperties().zz_bloqueado=='1'){
@@ -659,6 +659,7 @@ $HOY=date("Y-m-d");
 	
 		
 	var areaLayer = new ol.layer.Vector({
+		name: 'areaLayer',
 		style: styleArea,
 		source: _sArea
 	});
@@ -704,9 +705,11 @@ $HOY=date("Y-m-d");
 	});
 	 
 	 
-	if(parent._Adat.x0!==""){ 
-		mostrarArea(parent._Adat);
-	}	  
+	if(parent._Adata.x0!==""||parent._Adata.geometria!==""){ 
+		mostrarArea(parent._Adata);
+	}	
+	
+	 
 	vectorLayer.setSource(_source);
 	
 	layerOSM.setSource(_sourceBaseOSM);		
@@ -876,12 +879,23 @@ $HOY=date("Y-m-d");
 						else if(res[i].valorAct == 1){
 							_activ.innerHTML=_activ.innerHTML+res[i].valor;
 						}
-								
+						
 						_activ.innerHTML=_activ.innerHTML+'<br><span class=\"autor\">' + res[i].nombreUsuario.toUpperCase() + '</span>';
-						_activ.innerHTML=_activ.innerHTML+'<span class=\"textobreve\">' + res[i].textobreve + '</span>';
+						
+						_tx=res[i].textobreve;
+						
+						//console.log(res);
+						if(res[i].textobreve == ''){
+							_tx=_TX.substring(0,30);
+						}	
+						
+						_activ.innerHTML=_activ.innerHTML+'<span class=\"textobreve\">' + _tx + '</span>';
+						
 						if(res[i].linkth!=undefined){
 							_activ.innerHTML=_activ.innerHTML+'<img src=\"'+ res[i].linkth +'\">';
 						}
+						
+						
 						
 						
 						if(res[i]!=undefined){
@@ -907,17 +921,32 @@ $HOY=date("Y-m-d");
 		_features=_sArea.getFeatures();
 		for (i = 0; i < _features.length; i++) {_sArea.removeFeature(_features[i]);}	
 			
-		//_r = new ol.geom.Polygon([[-66,-44],[-1,-1], [-66,-1],[-1,-44]],'XY');
-		_ext= [	parseFloat(_ac.x0),	parseFloat(_ac.y0),	parseFloat(_ac.xF),	parseFloat(_ac.yF)]
-		_r = new ol.geom.Polygon.fromExtent(_ext);
-		_r.transform('EPSG:4326', 'EPSG:3857');
-		_fr = new ol.Feature({
-		    name: "Area de Trabajo",
-		    geometry: _r
-		});
-		_sArea.addFeature(_fr);
+		if(_ac.geometria!=''){
+			
+	        var format = new ol.format.WKT();	
+	        var _feat = format.readFeature(_ac.geometria, {
+	            dataProjection: 'EPSG:4326',
+	            featureProjection: 'EPSG:3857'
+	        });
+	        _r=_feat.getGeometry();
+
+	        
+		}else{
 		
-		if(parent._Pdat==undefined){_view.fit(_r)}
+			_ext= [	parseFloat(_ac.x0),	parseFloat(_ac.y0),	parseFloat(_ac.xF),	parseFloat(_ac.yF)]
+			_r = new ol.geom.Polygon.fromExtent(_ext);
+			_r.transform('EPSG:4326', 'EPSG:3857');
+			_feat = new ol.Feature({
+			    name: "Area de Trabajo",
+			    geometry: _r
+			});
+		}
+		
+		_sArea.addFeature(_feat);
+		
+		if(parent._Pdat==undefined){
+			_view.fit(_r);
+		}
 		
 	}
 	
@@ -927,8 +956,17 @@ $HOY=date("Y-m-d");
 	       if(layer.get('name')=='vectorLayer'){
 	          return feature;
 	       }
-	    });  
-	    	    
+	    });
+	    
+	   
+	    _enarea = mapa.forEachFeatureAtPixel(pixel, function(feature, layer){
+		      if(layer.get('name')=='areaLayer'){
+		          return true;
+		      }
+	     }); 
+	     if(_enarea==undefined){ _enarea = false;}
+	     
+	   	  
 	    _features=_sCandidato.getFeatures();	
 		for (i = 0; i < _features.length; i++) {		
 			_sCandidato.removeFeature(_features[i]);
@@ -938,17 +976,24 @@ $HOY=date("Y-m-d");
 	    	
 	    	if(parent._Aactiva=='si'){
 	    		
+	    		if(!_enarea){
+			   		if(!confirm('Este punto está fuera del área de trabajo propuesto! \n ¿Continuar de todos modos?')){return;}
+			   	}
+			   	
 	    		_features=_sCargado.getFeatures();	
 				for (i = 0; i < _features.length; i++) {		
 					_sCargado.removeFeature(_features[i]);
 				}
 				
+				
+			   	
 	    		_res=Array();
 	    		_res.data=Array();
 	    		_res.data.nuevo=Array();
 	    		
 	    		_coord3857=mapa.getCoordinateFromPixel(pixel);
 	    		_r = new ol.geom.Point(_coord3857);
+	    		
 	    		
 	    		_coord=ol.proj.transform(_coord3857,'EPSG:3857', 'EPSG:4326');
 	    		
@@ -960,6 +1005,8 @@ $HOY=date("Y-m-d");
 	    		
 	    		_view.fit(_fr.getGeometry(), {'duration': 300, 'maxZoom' : _view.getZoom()}); 	    		
 	    		
+	    		
+			   	
 	    		_res.data.nuevo={
 	    			'x': _coord[1],
 	    			'y': _coord[0],
@@ -970,6 +1017,8 @@ $HOY=date("Y-m-d");
 	    		};
 	    		
 	    		parent.cargaFormulario(_res);
+	    		
+	    		
 	        }
 	        
 	    	return;
@@ -993,7 +1042,7 @@ $HOY=date("Y-m-d");
 			_sCandidato.removeFeature(_features[i]);
 		}
 		
-		mostrarArea(parent._Adat);	
+		mostrarArea(parent._Adata);	
 	}
 	
 	function actualizarCoorPsMerc(id,xPsMerc,yPsMerc){

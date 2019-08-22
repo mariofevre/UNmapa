@@ -2,13 +2,17 @@
 /**
 * login.php
 *
-* aplicación inicial de acceso al sistema, permite dirigirse ala generación de usuairos o a la validación del usuario ingresante.* 
-* @package    	TReCC(tm) paneldecontrol.
-* @subpackage 	
-* @author     	TReCC SA
-* @author     	<mario@trecc.com.ar> <trecc@trecc.com.ar>
-* @author    	www.trecc.com.ar  
-* @copyright	2010 2014 TReCC SA
+* aplicación inicial de acceso al sistema, permite dirigirse ala generación de usuairos o a la validación del usuario ingresante.
+*  
+* @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
+* @subpackage 	actividad
+* @author     	Universidad Nacional de Moreno
+* @author     	<mario@trecc.com.ar>
+* @author    	https://github.com/mariofevre/UNmapa
+* @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
+* @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
+* @copyright	2019 Universidad Nacional de Moreno
+* @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
 * Este archivo es software libre: tu puedes redistriburlo 
@@ -47,6 +51,8 @@ if(isset($_POST['loguear'])){
 		SELECT `usuarios`.`id`,
 		    `usuarios`.`pass`,
 		    `usuarios`.`log`,
+		    `usuarios`.`nombre`,
+		    `usuarios`.`apellido`,
 		    `usuarios`.`zz_activo`	    
 		FROM 
 			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`usuarios`
@@ -70,6 +76,7 @@ if(isset($_POST['loguear'])){
 				
 				//print_r($_SESSION['Unmapa']);
 				$_SESSION['Unmapa'][$CU]->USUARIO['uid'] = $row['id'];
+				$_SESSION['Unmapa'][$CU]->USUARIO['usuario'] = $row['nombre']." ".$row['apellido'];
 				//print_r($_SESSION['Unmapa']);
 				
 				$l="./actividades.php"; //por defecto dirije al listado de actividades. luego de logear

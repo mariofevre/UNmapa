@@ -1,18 +1,17 @@
 <?php 
 /**
-* actividades_consulta.php
+* puntos_consulta.php
 *
-* aplicación que consulta el listado de actividades presentadas.
+* genera un json contenioendo los datos de todos los puntos de una actividad
 * 
 * @package    	UNmapa Herramienta pedágogica para la construccion colaborativa del territorio.  
 * @subpackage 	actividad
 * @author     	Universidad Nacional de Moreno
 * @author     	<mario@trecc.com.ar>
-* @author    	http://www.uba.ar/
-* @author    	http://www.trecc.com.ar/recursos/proyectoubatic2014.htm
+* @author    	https://github.com/mariofevre/UNmapa
 * @author		based on proyecto Plataforma Colectiva de Información Territorial: UBATIC2014
 * @author		based on TReCC SA Procesos Participativos Urbanos, development. www.trecc.com.ar/recursos
-* @copyright	2015 Universidad de Buenos Aires
+* @copyright	2019 Universidad Nacional de Moreno
 * @copyright	esta aplicación deriba de publicaciones GNU AGPL : Universidad de Buenos Aires 2015 / TReCC SA 2014
 * @license    	https://www.gnu.org/licenses/agpl-3.0-standalone.html GNU AFFERO GENERAL PUBLIC LICENSE, version 3 (agpl-3.0)
 * Este archivo es parte de TReCC(tm) paneldecontrol y de sus proyectos hermanos: baseobra(tm), TReCC(tm) intraTReCC  y TReCC(tm) Procesos Participativos Urbanos.
