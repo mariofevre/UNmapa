@@ -142,6 +142,8 @@ if($RID>0){
 <head>
 	<title>UNmapa - Área de Trabajo</title>
 	<?php include("./includes/meta.php");?>
+	<link rel="icon" href="./img/unmicon.ico">
+	
 	<link href="css/treccppu.css" rel="stylesheet" type="text/css">
 	<link href="css/UNmapa.css" rel="stylesheet" type="text/css">
 	<link href="css/actividad.css" rel="stylesheet" type="text/css">		
@@ -168,6 +170,93 @@ if($RID>0){
 		font-size:120%;
 		color:#f55;
 	}	
+	
+	#cargando{
+		width:100%;
+		height:100%;
+		position:absolute;
+		top:0;
+		left:0;
+		z-index:0;
+	}
+	
+	#cargando #barra{
+		position:absolute;
+		background-color:pink;
+		height:100%;
+	}
+	#cargando #avance{
+		position:absolute;
+		color:#444;
+	}
+	
+	img#linkimagen:hover{
+		border:#000;
+		box-shadow:5px 5px 10px rgba(0,0,0,0.8);
+	}
+	
+	#muestraimagen[estado="vacio"]{
+		display:none;
+		width:0px;
+		height:0px;
+	}
+	
+	#muestraimagen{
+		overflow:hidden;
+		position:fixed;
+		left:10vw;
+		top:10vh;
+		width:80vw;
+		height:80vh;
+		border:3px solid #55f;
+		background-color: #abf;
+		box-shadow: 10px 10px 60px 100px rgba(255,255,255,0.9); 
+		border-radius: 15px;
+		transition: width 2s;
+		z-index:1000;
+	}
+	
+	
+	
+	#portaimagen{
+		width: 90%;
+		max-height: 100%;
+		height: 100%;
+		display: block;
+		margin: auto;
+		text-align: center;
+	}
+
+	#cerrarimagen:hover{
+		background-color:#55f;
+	}		
+	#cerrarimagen{
+		position:absolute;
+		color:#000;
+		background-color:#fff;
+		border:1px solid #000;
+		top:6px;
+		right:6px;
+		font-size:16px;
+		z-index:2;
+	}
+	
+	#portaimagen img{
+		margin: auto;
+		max-width: calc(100% - 3px);
+		max-height: 90%;
+		display: inline-block;
+		vertical-align: middle;
+		border: 1px solid;
+	}
+	#alineacionverticalmagen{
+		height: 100%;
+		vertical-align: middle;
+		display: inline-block;
+		margin: auto;
+	}		
+	
+		
   </style>
   
 
@@ -343,7 +432,7 @@ if($RID>0){
 			<span id='link'></span>
 			<a id='linkweb' title='' target='_blank' href=''>ver link</a>
 			<a id='linkarchivo'  href='' download>/ descargar</a>	
-			<img id='linkimagen' src=''>
+			<img id='linkimagen' src='' onclick='mostrarImagen(this.getAttribute("src"))'>
 		</div>
 		
 		<div id='campovalor'>
@@ -396,11 +485,11 @@ if($RID>0){
 			
 			<div id='campolink'>
 				<label for='link'></label>
-				<input id='link' name='link' value=''>
+				<input id='link' name='link' value='' placeholder='copiar url aquí'>
 				<br>
 				<a style='margin-left:300px' id='linkweb' title='' target='_blank' href=''>ver link</a>
 				<a id='linkarchivo'  href='' download>descargar</a>	
-				<img id='linkimagen' src=''>
+				<img id='linkimagen' src='' onclick='mostrarImagen(this.getAttribute("src"))'>
 			</div>	
 			
 			<input id='inputAccion' type='hidden' name='accion' value=''>
@@ -442,30 +531,37 @@ if($RID>0){
 		</form>
 
 		<form id='adjuntador' enctype='multipart/form-data' method='post' action='./agrega_adjunto.php' target='cargaimagen'>			
-			<label style='position:relative;' class='upload'>							
-			<span id='upload' style='position:absolute;top:0px;left:0px;'>arrastre o busque aquí un archivo</span>
+			<label style='position:relative;' class='upload'>
+			<span id='upload' style='position:absolute;top:0px;left:0px;'>arrastre o busque aquí un archivo</span>		
+			<div id='cargando'><div id='barra'></div><div id='avance'></div></div>					
 			<input id='uploadinput' style='position:relative;opacity:0;' type='file' name='upload' value='' onchange='enviarAdjunto(this,event);'></label>
 			<input type='hidden' id='actividad' name='actividad' value='<?php echo $Actividad['id'];?>'>
+			
+			
 		</form>
 		<iframe id='cargaimagen' name='cargaimagen'></iframe>
 		
 	</div>
 	
+	<div id='muestraimagen' estado='vacio'>
+		<a id='cerrarimagen' onclick='this.parentNode.setAttribute("estado","vacio")'> X - cerrar </a>
+		<div id='portaimagen'><div id='alineacionverticalmagen'></div></div>
+	</div>
 </div>
 </div>
 
 
 
-	<script type="text/javascript">
-	
-		tinymce.init({ 
-			selector:'textarea', 
-			menubar: false,
-			width : "540px",
-			height : "120px",
-			skin : "unmapa",
-			});
-	</script>
+<script type="text/javascript">
+
+	tinymce.init({ 
+		selector:'textarea', 
+		menubar: false,
+		width : "540px",
+		height : "120px",
+		skin : "unmapa",
+		});
+</script>
 	
 <script type="text/javascript">
 	var _StatusEnvio='listo';
@@ -852,21 +948,28 @@ if($RID>0){
 				document.querySelector('#bloqPu[modo="reinc"]').style.display='none';				
 			}
 			
-			console.log('acceso:');
-			console.log(_ac);
-			console.log(_res.data.punto);
+			
+			
+			//console.log('acceso:');
+			//console.log(_ac);
+			//console.log(_res.data.punto);
 			_pf.querySelector('#categoria').style.backgroundColor=_res.data.punto.categoriaCol;
 			_col = _res.data.punto.categoriaCol.replace("rgb(", "");
 			_col = _col.replace(")", "");
 			_rgb =_col.split(',');	
-			console.log(_rgb);	
+			//console.log(_rgb);	
 			_val =(parseInt(_rgb[0])*0.299 + parseInt(_rgb[1])*0.587 + parseInt(_rgb[2])*0.114);
-			console.log(_val);
+			//console.log(_val);
 			if( _val > 165){
 				_fc ='#000000';
 			}else{
 				_fc = '#ffffff';
 			}
+			
+			
+			
+			
+			
 			_pf.querySelector('#categoria').style.color=_fc;
 			_pf.querySelector('#categoria').style.borderColor=_res.data.punto.categoriaCol;
 			_pf.querySelector('#categoria').style.borderStyle='solid';
@@ -949,10 +1052,18 @@ if($RID>0){
 			xhr[_nn] = new XMLHttpRequest();
 			xhr[_nn].open('POST', './agrega_adjunto.php', true);
 			//xhr[_nn].upload.li=_upF;
+			
+			
 			xhr[_nn].upload.addEventListener("progress", updateProgress, false);			
+			
+			document.querySelector('#cargando').style.display='block';
 			
 			xhr[_nn].onreadystatechange = function(evt){
 				//console.log(evt);
+				document.querySelector('#cargando').style.display='none';
+				document.querySelector('#cargando #barra').style.width=0;
+				document.querySelector('#cargando #avance').innerHTML="";		
+		
 				if(evt.explicitOriginalTarget != undefined){
 					
 					if(evt.explicitOriginalTarget.readyState==4){
@@ -1013,8 +1124,9 @@ if($RID>0){
 	
 	function updateProgress(evt) {
 	  if (evt.lengthComputable) {
-	    var percentComplete = 100 * evt.loaded / evt.total;		   
-	    console.log(Math.round(percentComplete)+"%");
+	    var percentComplete = 100 * evt.loaded / evt.total;		
+		document.querySelector('#cargando #barra').style.width=Math.round(percentComplete)+"%";
+		document.querySelector('#cargando #avance').innerHTML="("+Math.round(percentComplete)+"%)";		
 	  } else {
 	    // Unable to compute progress information since the total size is unknown
 	  }
@@ -1274,6 +1386,30 @@ if($RID>0){
 		}	
 	}
 	
+	
+	function mostrarImagen(_src){
+		
+		$.ajax({
+		    url:_src,
+		    type:'HEAD',
+		    error: function()
+		    {
+		        //file not exists
+		    },
+		    success: function()
+		    {
+		    	document.querySelector('#muestraimagen').setAttribute('estado','cargado');
+		    	_porta=document.querySelector('#portaimagen');
+		    	_porta.innerHTML='<div id="alineacionverticalmagen"></div>';
+		    	_img=document.createElement('img');
+		    	_img.setAttribute('src',_src);
+		    	_porta.appendChild(_img);
+		        //file exists
+		    }
+		});
+		
+	}
+		
 </script>
 	
 <script type='text/javascript'>

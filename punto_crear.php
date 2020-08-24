@@ -236,7 +236,7 @@ if(
 			$Log['tx'][]= 'error al crear categoria';
 			terminar($Log);
 		}
-		$_POST['categoria']=$Consulta->insert_id;
+		$_POST['categoria']=$Conec1->insert_id;
 		
 		if($_POST['categoria']<1){
 			$Log['tx'][]=$Conec1->error;

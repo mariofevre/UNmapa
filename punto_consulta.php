@@ -289,6 +289,7 @@ $fila=$Consulta->fetch_assoc();
 foreach($fila as $k => $v){
 	$Punto[$k]=utf8_encode($v);
 }
+ini_set('display_errors',0);//ver que pasa acá on el punto 2634
 
 $cat=$CatConversor[$fila['categoria']];
 $Punto['categoria']=$cat;
@@ -304,7 +305,7 @@ if(substr($Punto['link'],0,4)=='www.'||substr($Punto['link'],0,4)=='http'){
 }else{
 	$Punto['linkTipo']='locallink';
 }
-
+ini_set('display_errors',1);//ver que pasa acá on el punto 2634
 
 $extValImg['jpg']='1';
 $extValImg['png']='1';

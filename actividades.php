@@ -86,6 +86,8 @@ $HOY = $Hoy_a."-".$Hoy_m."-".$Hoy_d;
 <head>
 	<title>UNmapa - Listado de actividades</title>
 	<?php include("./includes/meta.php");?>
+	
+	<link rel="icon" href="./img/unmicon.ico">
 	<link href="./css/UNmapa.css" rel="stylesheet" type="text/css">
 	
 	
@@ -159,7 +161,8 @@ $HOY = $Hoy_a."-".$Hoy_m."-".$Hoy_d;
 
 		<iframe src='./MAPAgeneral.php'></iframe>
 		<form method='post' onsubmit='crearActividad(event)'>
-			<input type='submit' value='Crear una nueva actividad'>			
+			<input type='submit' value='Crear una nueva actividad'>
+			<input type='button' onclick='descargaGralShp()' value='Descargar Shapefile de contenidos'>			
 		</form>
 		<div class='contenido'>
 			<?php echo $Contenido;?>
@@ -191,7 +194,26 @@ function crearActividad(_event){
 	})
 }
 	
-	
+function descargaGralShp(){
+	_datos={
+		"idact":''
+		}
+	$.ajax({
+		data: _datos,
+		url:   './proc_generar_SHP_descarga.php',
+		type:  'post',
+		success:  function (response){
+			var _res = $.parseJSON(response);
+			
+				
+			if(_res.res='exito'){
+				
+				window.location.href = _res.data.ruta;
+			}
+			
+		}
+	})
+}
 	
 </script>
 <?php

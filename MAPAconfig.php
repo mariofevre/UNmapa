@@ -36,6 +36,23 @@ include("./includes/fechas.php");
 include("./includes/cadenas.php");
 
 //include("./includes/BASEconsultas.php");
+if(isset($_POST['actividad'])){
+	$ActividadId=$_POST['actividad'];
+	$ACCION = $_POST['accion'];
+	$RID=$_POST['rid'];
+	$_GET['rid']=$RID;
+
+}elseif(isset($_GET['actividad'])){
+	$ActividadId=$_GET['actividad'];
+}else{
+	$ActividadId='';
+}
+if($ActividadId==''){
+	//header('location: ./actividades.php');	//si no hay una actividad definida esta página no debería consultarse
+	echo "ERROR de Acceso 1";
+	exit;
+}
+
 
 $UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI==""){header('Location: ./login.php');}
@@ -263,8 +280,9 @@ $HOY=date("Y-m-d");
 	    view: _view
 	});
 	  
-	if(parent._Adat.x0!==""){ 
-		mostrarArea(parent._Adat);
+	
+	if(parent._Adata.x0!==""||parent._Adata.geometria!==""){ 
+		mostrarArea(parent._Adata);
 	}	  
 		  
 	
@@ -275,6 +293,7 @@ $HOY=date("Y-m-d");
 	var draw; // global so we can remove it later
     function addInteraction() {
     	var geometryFunction;
+    	 mapa.removeInteraction(draw);
     	_dibujando='si';
     	value = 'Circle';
         geometryFunction = ol.interaction.Draw.createBox();
@@ -287,7 +306,19 @@ $HOY=date("Y-m-d");
    
 	}
 	
+
+    function addInteractionPol() {
+    	 mapa.removeInteraction(draw);
+    	_dibujando='si';
+        
+        draw = new ol.interaction.Draw({
+            source: _sPreArea,
+            type: 'Polygon'
+        });
+        mapa.addInteraction(draw);   
+	}
 	
+		
 	_carga='no';
 	_sPreArea.on('change', function(evt){	
 		
@@ -312,10 +343,13 @@ $HOY=date("Y-m-d");
 		parent.document.getElementById('C_y0').value=_co[1];
 		parent.document.getElementById('C_xF').value=_co[2];
 		parent.document.getElementById('C_yF').value=_co[3];
-				    
+		
+		
+		var format = new ol.format.WKT();
+		parent.document.getElementById('C_geometria').value=format.writeGeometry(_cu);		
     });
     
-	addInteraction();
+	addInteractionPol();
       
 
 	_view.on('change:resolution', function(evt){       
@@ -335,17 +369,32 @@ $HOY=date("Y-m-d");
 		_features=_sArea.getFeatures();
 		for (i = 0; i < _features.length; i++) {_sArea.removeFeature(_features[i]);}	
 			
-		//_r = new ol.geom.Polygon([[-66,-44],[-1,-1], [-66,-1],[-1,-44]],'XY');
-		_ext= [	parseFloat(_ac.x0),	parseFloat(_ac.y0),	parseFloat(_ac.xF),	parseFloat(_ac.yF)]
-		_r = new ol.geom.Polygon.fromExtent(_ext);
-		_r.transform('EPSG:4326', 'EPSG:3857');
-		_fr = new ol.Feature({
-		    name: "Area de Trabajo",
-		    geometry: _r
-		});
-		_sArea.addFeature(_fr);
+		if(_ac.geometria!=''){
+			
+	        var format = new ol.format.WKT();	
+	        var _feat = format.readFeature(_ac.geometria, {
+	            dataProjection: 'EPSG:4326',
+	            featureProjection: 'EPSG:3857'
+	        });
+	        _r=_feat.getGeometry();
+
+	        
+		}else{
 		
-		if(parent._Pdat==undefined){_view.fit(_r)}
+			_ext= [	parseFloat(_ac.x0),	parseFloat(_ac.y0),	parseFloat(_ac.xF),	parseFloat(_ac.yF)]
+			_r = new ol.geom.Polygon.fromExtent(_ext);
+			_r.transform('EPSG:4326', 'EPSG:3857');
+			_feat = new ol.Feature({
+			    name: "Area de Trabajo",
+			    geometry: _r
+			});
+		}
+		
+		_sArea.addFeature(_feat);
+		
+		if(parent._Pdat==undefined){
+			_view.fit(_r);
+		}
 		
 	}
 	
@@ -360,7 +409,7 @@ $HOY=date("Y-m-d");
 			_sCandidato.removeFeature(_features[i]);
 		}
 		
-		mostrarArea(parent._Adat);	
+		mostrarArea(parent._Adata);	
 	}
 	
 </script>

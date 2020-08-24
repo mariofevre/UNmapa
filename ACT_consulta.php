@@ -172,8 +172,12 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		$Log['res']='err';
 		terminar($Log);
 	}
-	
-	//echo $query;
+
+	$ActAcc=array();
+	$ActAcc[$ID]=array();
+	$ActAcc[$ID]['Acc']=array();
+	$ActAcc[$ID]['acc']['editores']=array();
+	$ActAcc[$ID]['acc']['participantes']=array();
 	while($fila=$Consulta->fetch_assoc()){
 		foreach($fila as $k => $v){
 			$ActAcc[$fila['id_actividades']]['Acc'][$fila['nivel']][$fila['id']][$k]=utf8_encode($v);
@@ -290,7 +294,8 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 			$Usuarios[$fila['id']][$k]=utf8_encode($v);
 		}	
 	}
-		
+	
+	
 	foreach($ActAcc as $Kact => $Vact){
 		foreach($Vact['Acc'] as $kacN => $vacN){
 			foreach($vacN as $kacc => $vacc){
@@ -363,9 +368,15 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		terminar($Log);
 	}
 	
+	
 	while($fila=$Consulta->fetch_assoc()){
-		$cat=$CatConversor[$fila['categoria']];
+		if(isset($CatConversor[$fila['categoria']])){
+			$cat=$CatConversor[$fila['categoria']];
+		}else{
+			$cat='';
+		}
 		
+		if(!isset($ACT[$fila['id_actividades']]['categorias'][$cat]['cant'])){$ACT[$fila['id_actividades']]['categorias'][$cat]['cant']=0;}
 		$ACT[$fila['id_actividades']]['categorias'][$cat]['cant']++;
 		
 		foreach($fila as $k => $v){
@@ -411,7 +422,9 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 		$Log['res']='err';
 		terminar($Log);
 	}
-	
+
+
+	if (isset($ConsultaGEO)) {
 	if ($ConsultaGEO != null) {
 		while($fila=$Consulta->fetch_assoc()){
 			if(isset($ACT[$fila['id_actividades']])){
@@ -427,7 +440,7 @@ if(!isset($Freportehasta)||$Freportehasta=='0000-00-00'){$Freportehasta = '9999-
 			}		
 		}	
 	}
-
+	}
 $Log['res']='exito';
 $Log['data']=$ACT;
 terminar($Log);

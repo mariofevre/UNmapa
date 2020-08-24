@@ -171,6 +171,9 @@ $Tabla['ACTcategorias']['Type']='TablaHija';
 ?>
 
 	<title>UNmapa - Gestión de usuarios</title>
+	
+		<link rel="icon" href="./img/unmicon.ico">
+		
 	<?php include("./includes/meta.php");?>
 	<link href="css/treccppu.css" rel="stylesheet" type="text/css">
 	<link href="css/UNmapa.css" rel="stylesheet" type="text/css">		

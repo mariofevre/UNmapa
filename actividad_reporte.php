@@ -131,6 +131,8 @@ if($RID>0){
 
 <title>UNmapa - Área de Trabajo</title>
 <?php include("./includes/meta.php");?>
+	<link rel="icon" href="./img/unmicon.ico">
+	
 <link href="css/treccppu.css" rel="stylesheet" type="text/css">
 <link href="css/UNmapa.css" rel="stylesheet" type="text/css">	
 	

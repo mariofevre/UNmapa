@@ -41,6 +41,7 @@ ini_set('display_errors', 1);
 $Log=array();
 $Log['data']=array();
 $Log['tx']=array();
+$Log['mg']=array();
 $Log['res']='';
 function terminar($Log){
 	$res=json_encode($Log);
@@ -53,6 +54,7 @@ function terminar($Log){
 $UsuarioI = $_SESSION['Unmapa'][$CU]->USUARIO['uid'];
 if($UsuarioI<1){
 	$Log['tx'][]='error, usuario';
+	$Log['mg'][]=utf8_encode('ha caducado su sesión');
 	$Log['res']='err';
 	terminar($Log);
 }
@@ -132,12 +134,13 @@ $extVal['pdf']='1';
 $extVal['zip']='1';
 $extVal['mp3']='1';
 $extVal['mp4']='1';
-
+$extVal['pdf']='1';
 
 if(!isset($extVal[strtolower($ext)])){
 	$srt='';
 	foreach($extVal as $k => $v){$srt.="$k, ";}
 	$Log['tx'][]="solo se aceptan los formatos:".$srt;
+	$Log['mg'][]="solo se aceptan los formatos:".$srt;
 	$Log['res']='err';
 	terminar($Log);
 }
@@ -210,8 +213,7 @@ if (!copy($_FILES['upload']['tmp_name'], $nuevonombre)) {
 		$Log['tx'][]= "no pudo guardare el registro, puede que el documento permanezca inaccesible o sea eliminado. ";
 		$Log['tx'][]=print_r($_FILES['upload'],true);	
 		$Log['res']='err';
-		terminar($Log);
-		
+		terminar($Log);	
 	}
 }
 

@@ -154,6 +154,7 @@ function actividadesconsulta($ID,$seleccion){
 		    `actividades`.`y0`,
 		    `actividades`.`xF`,
 		    `actividades`.`yF`,
+		    
 		    `actividades`.`imx0`,
 		    `actividades`.`imy0`,
 		    `actividades`.`imxF`,
@@ -236,7 +237,14 @@ function actividadesconsulta($ID,$seleccion){
 	echo $Conec1->error;	
 	
 	while($fila=$ConsultaUsu->fetch_assoc()){
-		$Usuarios[$fila['id']]=$fila;		
+		$Usuarios[$fila['id']]=$fila;
+		$lim=(date('Y')-18)."-".date('m')."01";		
+		if($fila['nacimiento']>$lim){
+			$Usuarios[$fila['id']]['nombre']='reservado';
+			$Usuarios[$fila['id']]['apellido']='(menor)';	
+			$Usuarios[$fila['id']]['mail']='(reservado)';
+			$Usuarios[$fila['id']]['telefono']='(reservado)';
+		}
 	}
 	
 	if(!isset($ActAcc)){$ActAcc=array();}

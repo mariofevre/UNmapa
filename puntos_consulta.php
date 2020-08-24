@@ -393,7 +393,7 @@ if($Conec1->error!=''){
 					
 				}
 				
-				$ident='_th';
+				/*$ident='_th';
 				$nn=substr($ATT[$fila['id']]['link'], 0, $p).$ident.'.'.$e;
 				
 				if(!file_exists($nn)){
@@ -402,7 +402,7 @@ if($Conec1->error!=''){
 					if($i[0]>$ladomayor*1.3&&$i[1]>$ladomayor*1.3){
 						escalarImagen($ATT[$fila['id']]['link'], $ladomayor, $ident);
 					}
-				}
+				}*/
 			}
 		}elseif(substr($ATT[$fila['id']]['link'],0,5)=='http:'){
 			$f['properties']['linkloc']='remoto';

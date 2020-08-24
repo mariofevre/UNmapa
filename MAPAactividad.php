@@ -322,17 +322,32 @@ $HOY=date("Y-m-d");
 		color : 'rgba(0,100,255,0.8)',
 		width : 2,
 	});
+	
 	_yFill = new ol.style.Fill({
 	   color: 'rgba(0,100,255,0.6)'
 	}); 
-	var cRes = new ol.style.Circle({
-	    radius: 5,
-	    fill: _yFill,
-	    stroke: _yStroke
-	});
+
+
     var styleMapResalt = new ol.style.Style({
-	     image:cRes
+	     image: new ol.style.Circle({
+		    radius: 7,
+		    stroke: _yStroke
+		 })
     });
+   
+
+	    
+   /* var cResBase = new ol.style.Style({
+	     image: new ol.style.RegularShape({
+	      fill: _yFill,
+	      stroke: _yStroke,
+	      points: 4,
+	      radius: 10,
+	      radius2: 0,
+	      angle: 0,
+	    })
+    });*/
+    
 	var cResBase = new ol.style.Circle({
 	    radius: 3,
 	    fill: _yFill,
@@ -507,6 +522,7 @@ $HOY=date("Y-m-d");
         }else{
        
         }
+        
     }
  
 	var _cargado='no';
@@ -611,7 +627,9 @@ $HOY=date("Y-m-d");
 						
 				if(_features[_nn].getProperties()!=undefined){
 					if(_features[_nn].getProperties().link!=undefined){
-						_li.setAttribute('img',_features[_nn].getProperties().linkth);
+						if(_features[_nn].getProperties().linkth!=undefined){
+							_li.setAttribute('img',_features[_nn].getProperties().linkth);
+						}
 					}
 				}
 				
