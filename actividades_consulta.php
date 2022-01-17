@@ -57,6 +57,7 @@ function actividadesconsulta($ID,$seleccion){
 		    `ACTcategorias`.`zz_fusionadaa`,
 		    CO_color
 		FROM `".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.`ACTcategorias`
+		
 		WHERE
 			1=1
 			$andid
@@ -182,6 +183,8 @@ function actividadesconsulta($ID,$seleccion){
 		    `actividades`.`zz_AUTOUSUARIOCREAC`,
 		    `actividades`.`zz_AUTOFECHACREACION`,
 		    `actividades`.`zz_PUBLICO`,
+		    pub_publicacion_actividades.incluir_en_descarga_global,
+		     pub_publicacion_actividades.incluir_en_indice,
 		    usuarios.nombre as Unombre,
 		    usuarios.apellido as Uapellido,
 		    (select 
@@ -203,6 +206,10 @@ function actividadesconsulta($ID,$seleccion){
 			`".$_SESSION['Unmapa'][$CU]->DATABASE_NAME."`.usuarios
 			ON usuarios.id = actividades.zz_AUTOUSUARIOCREAC
 		
+		LEFT JOIN
+			pub_publicacion_actividades
+			ON pub_publicacion_actividades.id_p_actividades = actividades.id
+			
 		WHERE
 			(`zz_AUTOUSUARIOCREAC`='$UsuarioI'
 			OR

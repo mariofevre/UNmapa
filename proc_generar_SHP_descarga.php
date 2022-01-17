@@ -54,9 +54,18 @@ function terminar($Log){
 }*/
 
 
-include_once('./actividades_consulta.php');
-$Actividades=actividadesconsulta('',null);//carga los datos de la aactividad mediante esta funcion en atctividades_consulta.php
 
+
+include_once('./actividades_consulta.php');
+
+
+if(!isset($_POST['idact'])){
+	$ida='';
+}else{
+	$ida=$_POST['idact'];
+}
+
+$Actividades=actividadesconsulta($ida,null);//carga los datos de la actividad mediante esta funcion en atctividades_consulta.php
 
 
 $Log['tx'][]="cargando actividadesconsulta , null)";
@@ -132,10 +141,16 @@ try {
 			$Log['tx'][]='salteando actividad id: '.$idact;
 			continue;			
 		}
+		if($Actividad['incluir_en_descarga_global'] != '1'){
+			//esta actividad fue descartada de la descarga global en instancia de publicación
+			$Log['tx'][]='salteando actividad id: '.$idact;
+			continue;			
+		}
+		
+		if(!isset($Actividad['GEO'])){continue;}
 		foreach($Actividad['GEO'] as $gid => $gdata ){
 			if($gdata['zz_bloqueado']!='0'){continue;}
-			
-			
+						
 			/*
 			foreach($gdata as $k =>$v){		
 				if(!is_array($v)){
@@ -193,7 +208,8 @@ try {
 			$Point->setData('texto', $gd['texto']);
 			$Point->setData('num', $gd['valor']);
 			$Point->setData('categ', $gd['categoria']);
-			$Point->setData('categTx', $gd['categoriaTx']);
+			if(isset($gd['categoriaTx'])){$ctx=$gd['categoriaTx'];}else{$ctx='';}			
+			$Point->setData('categTx', $ctx);
 			
 			$Point->setData('link', 'http://190.111.246.33/extranet/UNmapa/'.$gd['link']);
 	        // Write the record to the Shapefile
@@ -209,7 +225,7 @@ try {
 	$comando='zip -r -j '.$Nom.".zip".' '.$Nom.'.*';
 		 $Log['tx'][]=  $comando ;
 	exec($comando,$exec_res);
- $Log['tx'][]=  $exec_res ;
+	$Log['tx'][]=  $exec_res ;
 	
 } catch (ShapefileException $e) {
     // Print detailed error information
